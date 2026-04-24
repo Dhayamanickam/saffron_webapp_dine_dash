@@ -1,0 +1,214 @@
+Build a production-ready Restaurant Partner Web App (hotel dashboard) using React + Tailwind CSS.
+
+I will upload inspiration UI images. You MUST strictly match the design style, layout, color system, spacing, and visual hierarchy exactly as shown in the reference images. Do NOT redesign.
+
+---
+
+🎯 PRODUCT GOAL:
+Create a real-time restaurant operations dashboard to control orders, preparation time, flash food, delivery coordination, menu, and offers.
+
+---
+
+## 🔥 CORE FEATURES (AAA PRIORITY)
+
+### 1. Dashboard
+
+* Show:
+
+  * Today’s orders
+  * Revenue
+  * Active orders
+  * Popular items
+  * Flash food performance
+* Simple charts
+
+---
+
+### 2. Orders Management (REAL-TIME)
+
+* Incoming orders list
+* Show:
+
+  * Items
+  * Customer details
+  * Order time
+* Actions:
+
+  * Accept / Reject
+  * Update status (Preparing → Ready → Picked)
+* Add:
+
+  * Preparation timer countdown
+  * Ability to override prep time per order
+  * Highlight urgent/delayed orders
+
+---
+
+### 3. Preparation Time Control
+
+* Set default prep time per item
+* Bulk update for all items
+* Dynamic update during busy mode
+
+---
+
+### 4. Flash Food Control (CRITICAL)
+
+* Enable/disable flash deals
+* Select items for flash sale
+* Set:
+
+  * Discount %
+  * Time duration
+  * Quantity limit
+* Show performance metrics
+
+---
+
+### 5. Menu Management
+
+* Add/edit/delete items
+* Categories
+* Price control
+* Availability toggle (real-time)
+* Add-ons / variants
+* Image upload
+
+---
+
+### 6. Offers & Discounts
+
+* Create percentage / flat offers
+* Set minimum order value
+* Schedule offers
+
+---
+
+### 7. Restaurant Status Control
+
+* Toggle:
+
+  * Open / Close
+  * Busy mode
+  * Pause orders
+
+---
+
+### 8. Delivery Coordination
+
+* Show assigned delivery partner
+* Mark order as ready
+* Delay reporting option
+
+---
+
+### 9. Support System
+
+* Raise ticket
+* Chat interface
+* Track status
+
+---
+
+### 10. Reports
+
+* Order history
+* Revenue analytics
+* Filters by date
+
+---
+
+### 11. Settings
+
+* Restaurant details
+* Working hours
+* Bank info
+
+---
+
+## 🎨 UI REQUIREMENTS (VERY IMPORTANT)
+
+* Follow uploaded reference UI EXACTLY
+* Match:
+
+  * Colors
+  * Typography
+  * Spacing
+  * Layout grid
+* Use:
+
+  * Sidebar navigation (left)
+  * Top header (status + notifications)
+* Use consistent design tokens
+
+---
+
+## ⚙️ TECH STACK
+
+* React (functional components)
+* Tailwind CSS
+* Component-based architecture
+
+---
+
+## 📁 STRUCTURE
+
+/src
+/components
+Sidebar.jsx
+Header.jsx
+OrderCard.jsx
+Table.jsx
+Modal.jsx
+/pages
+Dashboard.jsx
+Orders.jsx
+Menu.jsx
+FlashFood.jsx
+Offers.jsx
+Delivery.jsx
+Reports.jsx
+Support.jsx
+Settings.jsx
+
+---
+
+## 🔌 FUNCTIONALITY (MVP)
+
+* Use mock data
+* Accept/reject orders
+* Update order status
+* Add/edit menu items
+* Toggle availability
+* Manage flash food
+* Control prep time
+
+---
+
+## ✨ UX DETAILS
+
+* Highlight urgent orders
+* Sticky action buttons
+* Smooth transitions
+* Loading and empty states
+
+---
+
+## ⚠️ CONSTRAINTS
+
+* Do NOT redesign UI
+* Maintain pixel accuracy
+* Focus on speed and usability
+* Avoid unnecessary complexity
+
+---
+
+## 🚀 OUTPUT
+
+* Fully working restaurant dashboard UI
+* Clean and scalable components
+* Ready for backend integration
+
+---
+
+If any UI detail is unclear, strictly follow the uploaded reference images and modern restaurant dashboard UX patterns.
