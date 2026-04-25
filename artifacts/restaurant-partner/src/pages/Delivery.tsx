@@ -47,54 +47,82 @@ export default function Delivery() {
                 return (
                   <article
                     key={o.id}
-                    className="rounded-xl border border-card-border bg-background p-4 flex flex-col md:flex-row md:items-center gap-4"
+                    className="rounded-xl border border-card-border bg-background p-4 space-y-4 transition-shadow hover:shadow-sm"
                     data-testid={`delivery-row-${o.id}`}
                   >
-                    <div className="flex items-center gap-3 md:w-1/3">
-                      <div className="size-10 rounded-full bg-secondary flex items-center justify-center font-medium">
-                        {o.customerName.split(" ").map((s) => s[0]).join("").slice(0, 2)}
-                      </div>
-                      <div>
-                        <div className="font-medium">{o.id}</div>
-                        <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                          <MapPin className="size-3" /> {o.address}
+                    <header className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="size-10 rounded-full bg-secondary flex items-center justify-center font-medium shrink-0">
+                          {o.customerName.split(" ").map((s) => s[0]).join("").slice(0, 2)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold tracking-tight">{o.id}</span>
+                            <StatusPill status={o.status} />
+                          </div>
+                          <div className="text-xs text-muted-foreground inline-flex items-center gap-1 mt-0.5 truncate">
+                            <MapPin className="size-3 shrink-0" />
+                            <span className="truncate">{o.address}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="md:w-1/3">
-                      <div className="text-xs text-muted-foreground">Courier</div>
-                      <select
-                        value={o.partnerId ?? ""}
-                        onChange={(e) => {
-                          assignPartner(o.id, e.target.value);
-                          toast.success("Courier assigned");
-                        }}
-                        className="mt-1 h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
-                        data-testid={`select-partner-${o.id}`}
-                      >
-                        <option value="">— Unassigned —</option>
-                        {deliveryPartners.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} · ★ {p.rating.toFixed(1)}
-                          </option>
-                        ))}
-                      </select>
-                      {partner && (
-                        <div className="mt-1 text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                          <Phone className="size-3" /> {partner.phone}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="md:w-1/3 flex items-center justify-between md:justify-end gap-2">
-                      <div className="text-right">
-                        <div className="text-xs text-muted-foreground">{minutesAgoLabel(o.placedAt)}</div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[11px] text-muted-foreground">{minutesAgoLabel(o.placedAt)}</div>
                         <div className="font-semibold tabular-nums">{usd(o.total)}</div>
                       </div>
-                      <StatusPill status={o.status} />
+                    </header>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[11px] uppercase tracking-wider text-muted-foreground">Courier</label>
+                        <select
+                          value={o.partnerId ?? ""}
+                          onChange={(e) => {
+                            assignPartner(o.id, e.target.value);
+                            toast.success("Courier assigned");
+                          }}
+                          className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
+                          data-testid={`select-partner-${o.id}`}
+                        >
+                          <option value="">— Unassigned —</option>
+                          {deliveryPartners.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} · ★ {p.rating.toFixed(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[11px] uppercase tracking-wider text-muted-foreground">Contact</label>
+                        <div className="h-9 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                          {partner ? (
+                            <>
+                              <Phone className="size-3.5" />
+                              <span className="tabular-nums">{partner.phone}</span>
+                            </>
+                          ) : (
+                            <span className="text-xs italic">Assign a courier to see contact</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-card-border/60">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full text-muted-foreground"
+                        onClick={() => {
+                          reportDelay(o.id, 5);
+                          toast.message(`+5 min added`);
+                        }}
+                        data-testid={`button-delay-delivery-${o.id}`}
+                      >
+                        +5 min delay
+                      </Button>
                       {o.status === "preparing" && (
                         <Button
+                          size="sm"
                           className="rounded-full bg-primary text-primary-foreground hover-elevate active-elevate-2"
                           onClick={() => {
                             advanceOrder(o.id);
@@ -102,11 +130,12 @@ export default function Delivery() {
                           }}
                           data-testid={`button-mark-ready-delivery-${o.id}`}
                         >
-                          <PackageCheck className="size-4 mr-1" /> Ready
+                          <PackageCheck className="size-4 mr-1" /> Mark Ready
                         </Button>
                       )}
                       {o.status === "ready" && (
                         <Button
+                          size="sm"
                           className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
                           onClick={() => {
                             advanceOrder(o.id);
@@ -117,17 +146,6 @@ export default function Delivery() {
                           <Truck className="size-4 mr-1" /> Hand off
                         </Button>
                       )}
-                      <Button
-                        variant="outline"
-                        className="rounded-full"
-                        onClick={() => {
-                          reportDelay(o.id, 5);
-                          toast.message(`+5 min added`);
-                        }}
-                        data-testid={`button-delay-delivery-${o.id}`}
-                      >
-                        +5 min
-                      </Button>
                     </div>
                   </article>
                 );
