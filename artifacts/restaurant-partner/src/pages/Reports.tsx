@@ -2,10 +2,14 @@ import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { SectionPanel } from "@/components/SectionPanel";
 import { StatusPill } from "@/components/StatusPill";
+import { PageHeader } from "@/components/PageHeader";
+import { StatStrip } from "@/components/StatStrip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { revenueByDay } from "@/lib/mockData";
 import { dateShort, usd } from "@/lib/format";
+import { Wallet, ShoppingBag, Receipt, CheckCircle2, Download } from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -36,29 +40,37 @@ export default function Reports() {
 
   return (
     <div className="space-y-4">
-      <SectionPanel
+      <PageHeader
         title="Reports"
-        subtitle="Revenue trends and order history."
+        description="Revenue trends, order volume, and payout-ready exports across any date range."
         actions={
-          <div className="flex items-center gap-3">
-            <div className="space-y-0.5">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
               <Label className="text-[11px] text-muted-foreground">From</Label>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8" data-testid="input-from-date" />
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 w-[150px]" data-testid="input-from-date" />
             </div>
-            <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5">
               <Label className="text-[11px] text-muted-foreground">To</Label>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8" data-testid="input-to-date" />
+              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 w-[150px]" data-testid="input-to-date" />
             </div>
+            <Button variant="outline" className="rounded-full" data-testid="button-export-reports">
+              <Download className="size-4 mr-1" /> Export
+            </Button>
           </div>
         }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Stat label="Total revenue" value={usd(total)} accent />
-          <Stat label="Orders" value={String(filtered.length)} />
-          <Stat label="Avg ticket" value={usd(avg)} />
-        </div>
+      />
 
-        <div className="mt-5 h-[260px]">
+      <StatStrip
+        items={[
+          { label: "Total revenue", value: usd(total), icon: Wallet, accent: true },
+          { label: "Orders", value: String(filtered.length), icon: ShoppingBag },
+          { label: "Avg ticket", value: usd(avg), icon: Receipt },
+          { label: "Completed", value: String(completed), icon: CheckCircle2 },
+        ]}
+      />
+
+      <SectionPanel title="Revenue trend" subtitle="Last 7 days vs your filter range.">
+        <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={revenueByDay} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
               <defs>
@@ -77,16 +89,12 @@ export default function Reports() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-
-        <div className="mt-2 text-xs text-muted-foreground">
-          Showing {filtered.length} orders · {completed} completed
-        </div>
       </SectionPanel>
 
-      <SectionPanel title="Order history" noPadding>
-        <div className="overflow-x-auto">
+      <SectionPanel title="Order history" subtitle={`Showing ${filtered.length} orders · ${completed} completed`} noPadding>
+        <div className="overflow-x-auto max-h-[480px]">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-card">
               <tr className="text-xs text-muted-foreground border-b border-card-border">
                 <th className="text-left font-normal py-3 pl-5 pr-3">Order ID</th>
                 <th className="text-left font-normal py-3 px-3">Customer</th>
@@ -98,7 +106,11 @@ export default function Reports() {
             </thead>
             <tbody>
               {filtered.map((o) => (
-                <tr key={o.id} className="border-b border-card-border/60 last:border-b-0" data-testid={`row-report-${o.id}`}>
+                <tr
+                  key={o.id}
+                  className="border-b border-card-border/60 last:border-b-0 hover:bg-secondary/40 transition-colors"
+                  data-testid={`row-report-${o.id}`}
+                >
                   <td className="py-3.5 pl-5 pr-3 font-medium">{o.id}</td>
                   <td className="py-3.5 px-3">{o.customerName}</td>
                   <td className="py-3.5 px-3 text-muted-foreground">{o.channel}</td>
@@ -111,15 +123,6 @@ export default function Reports() {
           </table>
         </div>
       </SectionPanel>
-    </div>
-  );
-}
-
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className={`rounded-xl p-4 ${accent ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-      <div className={`text-[11px] ${accent ? "text-primary-foreground/90" : "text-muted-foreground"}`}>{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
     </div>
   );
 }

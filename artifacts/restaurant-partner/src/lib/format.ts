@@ -26,3 +26,5 @@ export const dateShort = (iso: string) =>
 
 export const dateOnly = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+
+export const fmtTimeAgo = minutesAgoLabel;

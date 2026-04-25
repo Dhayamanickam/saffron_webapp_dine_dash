@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { SectionPanel } from "@/components/SectionPanel";
+import { PageHeader } from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -11,7 +12,21 @@ export default function Settings() {
   const [profile, setProfile] = useState(restaurantProfile);
 
   return (
-    <div className="grid grid-cols-12 gap-4">
+    <div className="space-y-4">
+      <PageHeader
+        title="Settings"
+        description="Restaurant profile, working hours, and payout details. Changes apply across every page in real time."
+        actions={
+          <Button
+            className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
+            onClick={() => toast.success("Settings saved")}
+            data-testid="button-save-settings-header"
+          >
+            Save changes
+          </Button>
+        }
+      />
+      <div className="grid grid-cols-12 gap-4">
       <div className="col-span-12 md:col-span-7 space-y-4">
         <SectionPanel title="Restaurant details" subtitle="Public information shown to customers.">
           <div className="grid grid-cols-2 gap-3">
@@ -101,18 +116,7 @@ export default function Settings() {
           </div>
         </SectionPanel>
 
-        <SectionPanel title="Save changes">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Updates apply immediately across the app.</p>
-            <Button
-              className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
-              onClick={() => toast.success("Settings saved")}
-              data-testid="button-save-settings"
-            >
-              Save
-            </Button>
-          </div>
-        </SectionPanel>
+      </div>
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { SectionPanel } from "@/components/SectionPanel";
+import { PageHeader } from "@/components/PageHeader";
+import { StatStrip } from "@/components/StatStrip";
+import { DishImage } from "@/components/DishImage";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DishVisual } from "@/components/DishVisual";
-import { Zap, Plus, Trash2 } from "lucide-react";
+import { Zap, Plus, Trash2, Wallet, Timer, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { usd2 } from "@/lib/format";
 
@@ -23,15 +25,25 @@ export default function FlashFood() {
   const { flashEnabled, setFlashEnabled, flashDeals, upsertFlashDeal, toggleFlashDeal, deleteFlashDeal, menu } = useStore();
   const [open, setOpen] = useState(false);
 
+  const flashRevenue = flashDeals.reduce((s, d) => {
+    const item = menu.find((m) => m.id === d.itemId);
+    const unit = item ? item.price * (1 - d.discountPct / 100) : 0;
+    return s + unit * d.sold;
+  }, 0);
+  const unitsSold = flashDeals.reduce((s, d) => s + d.sold, 0);
+  const activeCount = flashDeals.filter((d) => d.active).length;
+
   return (
     <div className="space-y-4">
-      <SectionPanel
-        title="Flash Food Control"
-        subtitle="Run lightning-fast deals. Limit by quantity or duration."
+      <PageHeader
+        title="Flash Food"
+        description="Push lightning-fast deals to clear inventory. Cap by time window or quantity — toggle the master switch to pause everything."
         actions={
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">Master switch</span>
-            <Switch checked={flashEnabled} onCheckedChange={setFlashEnabled} data-testid="switch-flash-master" />
+          <>
+            <div className="inline-flex items-center gap-2 rounded-full bg-card border border-card-border px-3 py-1.5 shadow-sm">
+              <span className="text-xs text-muted-foreground">Master</span>
+              <Switch checked={flashEnabled} onCheckedChange={setFlashEnabled} data-testid="switch-flash-master" />
+            </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button className="rounded-full bg-primary text-primary-foreground hover-elevate active-elevate-2" data-testid="button-new-flash">
@@ -46,25 +58,18 @@ export default function FlashFood() {
                 }}
               />
             </Dialog>
-          </div>
+          </>
         }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Stat label="Active deals" value={String(flashDeals.filter((d) => d.active).length)} />
-          <Stat label="Units sold" value={String(flashDeals.reduce((s, d) => s + d.sold, 0))} />
-          <Stat
-            label="Revenue"
-            value={usd2(
-              flashDeals.reduce((s, d) => {
-                const item = menu.find((m) => m.id === d.itemId);
-                const unit = item ? item.price * (1 - d.discountPct / 100) : 0;
-                return s + unit * d.sold;
-              }, 0),
-            )}
-            accent
-          />
-        </div>
-      </SectionPanel>
+      />
+
+      <StatStrip
+        items={[
+          { label: "Active deals", value: String(activeCount), icon: Zap, hint: `${flashDeals.length} configured` },
+          { label: "Units sold", value: String(unitsSold), icon: ShoppingBag },
+          { label: "Avg window", value: `${Math.round(flashDeals.reduce((s, d) => s + d.durationMin, 0) / Math.max(1, flashDeals.length))} min`, icon: Timer },
+          { label: "Flash revenue", value: usd2(flashRevenue), icon: Wallet, accent: true },
+        ]}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {flashDeals.map((d) => {
@@ -75,10 +80,10 @@ export default function FlashFood() {
           return (
             <article
               key={d.id}
-              className="rounded-2xl border border-card-border bg-card shadow-sm p-5 flex gap-4"
+              className="rounded-2xl border border-card-border bg-card shadow-sm p-5 flex gap-4 transition-shadow hover:shadow-md"
               data-testid={`flash-card-${d.id}`}
             >
-              <DishVisual hue={item.imageHue} name={item.name} className="size-24 shrink-0" />
+              <DishImage itemId={item.id} src={item.imageUrl} name={item.name} className="size-24 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between">
                   <div>
@@ -123,15 +128,6 @@ export default function FlashFood() {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className={`rounded-xl p-4 ${accent ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-      <div className={`text-[11px] ${accent ? "text-primary-foreground/90" : "text-muted-foreground"}`}>{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
     </div>
   );
 }

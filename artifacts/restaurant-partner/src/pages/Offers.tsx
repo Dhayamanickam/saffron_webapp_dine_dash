@@ -3,9 +3,12 @@ import { useStore } from "@/lib/store";
 import { SectionPanel } from "@/components/SectionPanel";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { StatStrip } from "@/components/StatStrip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Tag, Trash2 } from "lucide-react";
+import { Plus, Tag, Trash2, Percent, Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { dateOnly, usd2 } from "@/lib/format";
 
@@ -22,11 +25,22 @@ export default function Offers() {
   const { offers, upsertOffer, deleteOffer } = useStore();
   const [open, setOpen] = useState(false);
 
+  const active = offers.filter((o) => o.active).length;
+  const expired = offers.filter((o) => new Date(o.endsAt).getTime() < Date.now()).length;
+  const avgValue =
+    offers.length === 0
+      ? "—"
+      : (() => {
+          const pcts = offers.filter((o) => o.type === "percent");
+          if (pcts.length === 0) return "—";
+          return `${Math.round(pcts.reduce((s, o) => s + o.value, 0) / pcts.length)}% avg`;
+        })();
+
   return (
     <div className="space-y-4">
-      <SectionPanel
+      <PageHeader
         title="Offers & Discounts"
-        subtitle="Promo codes, schedule windows, and minimum order rules."
+        description="Schedule promo codes and clarity-friendly discount windows. Toggle status anytime — applies storefront-wide."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -43,6 +57,20 @@ export default function Offers() {
             />
           </Dialog>
         }
+      />
+
+      <StatStrip
+        items={[
+          { label: "Active", value: String(active), icon: CheckCircle2, hint: "Live now" },
+          { label: "Total offers", value: String(offers.length), icon: Tag },
+          { label: "Expired", value: String(expired), icon: Clock },
+          { label: "Avg discount", value: avgValue, icon: Percent, accent: true },
+        ]}
+      />
+
+      <SectionPanel
+        title="All offers"
+        subtitle="Click into a row to delete or modify."
         noPadding
       >
         {offers.length === 0 ? (
@@ -50,7 +78,7 @@ export default function Offers() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-card">
                 <tr className="text-xs text-muted-foreground border-b border-card-border">
                   <th className="text-left font-normal py-3 pl-5 pr-3">Code</th>
                   <th className="text-left font-normal py-3 px-3">Type</th>
@@ -63,7 +91,11 @@ export default function Offers() {
               </thead>
               <tbody>
                 {offers.map((o) => (
-                  <tr key={o.id} className="border-b border-card-border/60 last:border-b-0" data-testid={`row-offer-${o.id}`}>
+                  <tr
+                    key={o.id}
+                    className="border-b border-card-border/60 last:border-b-0 hover:bg-secondary/40 transition-colors"
+                    data-testid={`row-offer-${o.id}`}
+                  >
                     <td className="py-3.5 pl-5 pr-3 font-medium tracking-wide">{o.code}</td>
                     <td className="py-3.5 px-3 text-muted-foreground">{o.type === "percent" ? "Percent" : "Flat"}</td>
                     <td className="py-3.5 px-3 text-right font-medium tabular-nums">
@@ -77,16 +109,21 @@ export default function Offers() {
                       <StatusPill status={o.active ? "active" : "inactive"} />
                     </td>
                     <td className="py-3.5 pr-5 text-right">
-                      <button
-                        className="size-7 rounded-md text-destructive hover-elevate active-elevate-2 inline-flex items-center justify-center"
-                        onClick={() => {
-                          deleteOffer(o.id);
-                          toast.error(`Deleted ${o.code}`);
-                        }}
-                        data-testid={`button-delete-offer-${o.id}`}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="size-7 rounded-md text-destructive hover-elevate active-elevate-2 inline-flex items-center justify-center"
+                            onClick={() => {
+                              deleteOffer(o.id);
+                              toast.error(`Deleted ${o.code}`);
+                            }}
+                            data-testid={`button-delete-offer-${o.id}`}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete offer</TooltipContent>
+                      </Tooltip>
                     </td>
                   </tr>
                 ))}

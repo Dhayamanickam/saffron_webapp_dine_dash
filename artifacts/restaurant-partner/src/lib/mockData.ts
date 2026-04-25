@@ -40,6 +40,7 @@ export type MenuItem = {
   variants: { name: string; deltaPrice: number }[];
   addOns: { name: string; price: number }[];
   imageHue: number;
+  imageUrl?: string;
 };
 
 export type FlashDeal = {
@@ -72,13 +73,46 @@ export type DeliveryPartner = {
   status: "available" | "busy" | "offline";
 };
 
+export type TicketSource = "customer" | "delivery" | "restaurant";
+export type TicketIssueType =
+  | "order_issue"
+  | "payment"
+  | "delivery"
+  | "menu"
+  | "technical"
+  | "billing"
+  | "other";
+export type TicketStatus = "open" | "in_progress" | "resolved";
+export type TicketPriority = "low" | "medium" | "high" | "urgent";
+
+export type TicketMessage = {
+  id: string;
+  from: "you" | "support" | "customer";
+  authorName?: string;
+  text: string;
+  at: string;
+  internal?: boolean;
+  attachments?: { name: string; size: string }[];
+};
+
 export type SupportTicket = {
   id: string;
   subject: string;
-  status: "open" | "in_progress" | "resolved";
-  priority: "low" | "medium" | "high";
+  source: TicketSource;
+  issueType: TicketIssueType;
+  status: TicketStatus;
+  priority: TicketPriority;
   createdAt: string;
-  messages: { from: "you" | "support"; text: string; at: string }[];
+  updatedAt: string;
+  resolvedAt?: string;
+  assignedTo?: string;
+  user: {
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  orderRef?: string;
+  messages: TicketMessage[];
 };
 
 export const restaurantProfile = {
@@ -224,6 +258,8 @@ export const menuItems: MenuItem[] = [
 
 const now = Date.now();
 const minutesAgo = (m: number) => new Date(now - m * 60_000).toISOString();
+const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString();
+const daysAgo = (d: number) => new Date(now - d * 86400_000).toISOString();
 
 export const initialOrders: Order[] = [
   {
@@ -297,9 +333,7 @@ export const initialOrders: Order[] = [
     customerName: "Priya Shah",
     customerPhone: "+1 415 555 0190",
     address: "455 Mission St",
-    items: [
-      { id: "i1", name: "Saffron Biryani — Vegetable", qty: 1, price: 19 },
-    ],
+    items: [{ id: "i1", name: "Saffron Biryani — Vegetable", qty: 1, price: 19 }],
     total: 19,
     placedAt: minutesAgo(46),
     prepMinutes: 25,
@@ -354,7 +388,7 @@ export const initialOffers: Offer[] = [
     type: "percent",
     value: 10,
     minOrder: 25,
-    startsAt: new Date(now - 86400000 * 4).toISOString(),
+    startsAt: daysAgo(4),
     endsAt: new Date(now + 86400000 * 12).toISOString(),
     active: true,
   },
@@ -364,7 +398,7 @@ export const initialOffers: Offer[] = [
     type: "flat",
     value: 5,
     minOrder: 35,
-    startsAt: new Date(now - 86400000 * 1).toISOString(),
+    startsAt: daysAgo(1),
     endsAt: new Date(now + 86400000 * 6).toISOString(),
     active: true,
   },
@@ -374,8 +408,8 @@ export const initialOffers: Offer[] = [
     type: "percent",
     value: 20,
     minOrder: 0,
-    startsAt: new Date(now - 86400000 * 30).toISOString(),
-    endsAt: new Date(now - 86400000 * 1).toISOString(),
+    startsAt: daysAgo(30),
+    endsAt: daysAgo(1),
     active: false,
   },
 ];
@@ -387,37 +421,191 @@ export const deliveryPartners: DeliveryPartner[] = [
   { id: "p4", name: "Sana Iqbal", phone: "+1 415 555 0277", rating: 5.0, status: "available" },
 ];
 
+export const supportAgents = ["Unassigned", "Priya M.", "Jordan K.", "Sajibur R."];
+
+export const issueTypeLabels: Record<TicketIssueType, string> = {
+  order_issue: "Order issue",
+  payment: "Payment",
+  delivery: "Delivery",
+  menu: "Menu",
+  technical: "Technical",
+  billing: "Billing",
+  other: "Other",
+};
+
+export const sourceLabels: Record<TicketSource, string> = {
+  customer: "Customer",
+  delivery: "Delivery",
+  restaurant: "Restaurant",
+};
+
+export const quickReplies = [
+  { id: "qr1", label: "Acknowledge", text: "Thanks for reaching out — we're looking into this right away and will follow up shortly." },
+  { id: "qr2", label: "Refund issued", text: "We've processed a refund for the affected order. It should reflect in 3–5 business days." },
+  { id: "qr3", label: "Apology + comp", text: "Apologies for the experience. We've added a complimentary credit to your account for your next order." },
+  { id: "qr4", label: "Need more info", text: "Could you share your order ID and the time you placed it? That'll help us track this faster." },
+  { id: "qr5", label: "Resolved", text: "Glad we could sort this out. Closing this ticket — feel free to open a new one anytime." },
+];
+
 export const initialTickets: SupportTicket[] = [
   {
-    id: "t1",
-    subject: "Payout schedule for last week",
-    status: "in_progress",
-    priority: "medium",
-    createdAt: new Date(now - 86400000 * 1).toISOString(),
-    messages: [
-      { from: "you", text: "Hi — when will the Apr 14–20 payout land?", at: new Date(now - 86400000 * 1).toISOString() },
-      { from: "support", text: "Hey Sajibur, payout is queued for tomorrow 10am PT.", at: new Date(now - 86400000 * 0.7).toISOString() },
-    ],
-  },
-  {
-    id: "t2",
-    subject: "Aggregator showing wrong prep time",
+    id: "TKT-2041",
+    subject: "Item missing from order",
+    source: "customer",
+    issueType: "order_issue",
     status: "open",
     priority: "high",
-    createdAt: new Date(now - 86400000 * 0.2).toISOString(),
+    createdAt: minutesAgo(18),
+    updatedAt: minutesAgo(18),
+    user: { name: "Mira Patel", email: "mira.p@example.com", phone: "+1 415 555 0118" },
+    orderRef: "INV_000076",
     messages: [
-      { from: "you", text: "Aggregator app is showing 12 min prep when our default is 18.", at: new Date(now - 86400000 * 0.2).toISOString() },
+      {
+        id: "msg1",
+        from: "customer",
+        authorName: "Mira Patel",
+        text: "Hi — my order arrived but the mango lassi is missing. Could you sort this out?",
+        at: minutesAgo(18),
+        attachments: [{ name: "receipt.jpg", size: "248 KB" }],
+      },
     ],
   },
   {
-    id: "t3",
+    id: "TKT-2040",
+    subject: "Aggregator showing wrong prep time",
+    source: "restaurant",
+    issueType: "technical",
+    status: "in_progress",
+    priority: "urgent",
+    createdAt: hoursAgo(3),
+    updatedAt: hoursAgo(1),
+    assignedTo: "Priya M.",
+    user: { name: "Sajibur Rahman", email: "sajibur.rahman@saffronsmoke.co" },
+    messages: [
+      {
+        id: "msg1",
+        from: "you",
+        authorName: "Sajibur Rahman",
+        text: "Aggregator app is showing 12 min prep when our default is 18.",
+        at: hoursAgo(3),
+      },
+      {
+        id: "msg2",
+        from: "support",
+        authorName: "Priya M.",
+        text: "Thanks Sajibur — escalating to the platform team. ETA 2h.",
+        at: hoursAgo(2),
+      },
+      {
+        id: "msg3",
+        from: "support",
+        authorName: "Priya M.",
+        internal: true,
+        text: "Internal note: confirmed config drift on aggregator side. Pushing fix.",
+        at: hoursAgo(1),
+      },
+    ],
+  },
+  {
+    id: "TKT-2039",
+    subject: "Courier waited 14 min at handoff",
+    source: "delivery",
+    issueType: "delivery",
+    status: "open",
+    priority: "medium",
+    createdAt: hoursAgo(5),
+    updatedAt: hoursAgo(5),
+    user: { name: "Eli Romero", email: "eli.r@couriers.example", phone: "+1 415 555 0211" },
+    orderRef: "INV_000074",
+    messages: [
+      {
+        id: "msg1",
+        from: "customer",
+        authorName: "Eli Romero",
+        text: "Waited 14 minutes for handoff. Long delay impacted my next pickup.",
+        at: hoursAgo(5),
+      },
+    ],
+  },
+  {
+    id: "TKT-2038",
+    subject: "Payout schedule for last week",
+    source: "restaurant",
+    issueType: "billing",
+    status: "in_progress",
+    priority: "medium",
+    createdAt: daysAgo(1),
+    updatedAt: hoursAgo(8),
+    assignedTo: "Jordan K.",
+    user: { name: "Sajibur Rahman", email: "sajibur.rahman@saffronsmoke.co" },
+    messages: [
+      {
+        id: "msg1",
+        from: "you",
+        authorName: "Sajibur Rahman",
+        text: "Hi — when will the Apr 14–20 payout land?",
+        at: daysAgo(1),
+      },
+      {
+        id: "msg2",
+        from: "support",
+        authorName: "Jordan K.",
+        text: "Hey Sajibur, payout is queued for tomorrow 10am PT.",
+        at: hoursAgo(8),
+      },
+    ],
+  },
+  {
+    id: "TKT-2037",
+    subject: "Cold biryani on arrival",
+    source: "customer",
+    issueType: "order_issue",
+    status: "resolved",
+    priority: "high",
+    createdAt: daysAgo(2),
+    updatedAt: daysAgo(1),
+    resolvedAt: daysAgo(1),
+    assignedTo: "Sajibur R.",
+    user: { name: "Daniel Cho", email: "daniel.c@example.com", phone: "+1 415 555 0143" },
+    orderRef: "INV_000075",
+    messages: [
+      { id: "msg1", from: "customer", authorName: "Daniel Cho", text: "Biryani arrived cold — disappointing.", at: daysAgo(2) },
+      { id: "msg2", from: "you", authorName: "Sajibur R.", text: "Apologies Daniel. Refunded and added a $15 credit.", at: daysAgo(1) },
+      { id: "msg3", from: "customer", authorName: "Daniel Cho", text: "Thank you, much appreciated.", at: daysAgo(1) },
+    ],
+  },
+  {
+    id: "TKT-2036",
     subject: "Add second printer to dispatch",
+    source: "restaurant",
+    issueType: "technical",
     status: "resolved",
     priority: "low",
-    createdAt: new Date(now - 86400000 * 11).toISOString(),
+    createdAt: daysAgo(11),
+    updatedAt: daysAgo(10),
+    resolvedAt: daysAgo(10),
+    assignedTo: "Jordan K.",
+    user: { name: "Sajibur Rahman", email: "sajibur.rahman@saffronsmoke.co" },
     messages: [
-      { from: "you", text: "Need a kitchen-side printer mirror.", at: new Date(now - 86400000 * 11).toISOString() },
-      { from: "support", text: "Provisioned. Restart the dispatch tablet.", at: new Date(now - 86400000 * 10).toISOString() },
+      { id: "msg1", from: "you", authorName: "Sajibur Rahman", text: "Need a kitchen-side printer mirror.", at: daysAgo(11) },
+      { id: "msg2", from: "support", authorName: "Jordan K.", text: "Provisioned. Restart the dispatch tablet.", at: daysAgo(10) },
+    ],
+  },
+  {
+    id: "TKT-2035",
+    subject: "Update weekend hours",
+    source: "restaurant",
+    issueType: "other",
+    status: "resolved",
+    priority: "low",
+    createdAt: daysAgo(14),
+    updatedAt: daysAgo(13),
+    resolvedAt: daysAgo(13),
+    assignedTo: "Priya M.",
+    user: { name: "Sajibur Rahman", email: "sajibur.rahman@saffronsmoke.co" },
+    messages: [
+      { id: "msg1", from: "you", authorName: "Sajibur Rahman", text: "Extending Sat hours to 11:30pm starting next week.", at: daysAgo(14) },
+      { id: "msg2", from: "support", authorName: "Priya M.", text: "Updated across listings.", at: daysAgo(13) },
     ],
   },
 ];

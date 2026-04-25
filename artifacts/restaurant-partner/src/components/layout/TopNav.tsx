@@ -1,8 +1,17 @@
 import { Link, useLocation } from "wouter";
-import { Bell, Search, Info, ChevronDown, Power, Pause, Flame } from "lucide-react";
+import { Bell, Search, ChevronDown, Power, Pause, Flame, Settings as SettingsIcon } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { restaurantProfile } from "@/lib/mockData";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const links = [
   { to: "/", label: "Dashboard" },
@@ -17,6 +26,15 @@ const links = [
 export function TopNav() {
   const [location] = useLocation();
   const { status, setStatus } = useStore();
+
+  const statusLabel = status.paused ? "Paused" : status.busy ? "Busy" : status.open ? "Open" : "Closed";
+  const statusDot = status.paused
+    ? "bg-destructive"
+    : status.busy
+      ? "bg-amber-500"
+      : status.open
+        ? "bg-emerald-500"
+        : "bg-muted-foreground";
 
   return (
     <header className="flex items-center gap-3 px-2" data-testid="top-nav">
@@ -49,75 +67,105 @@ export function TopNav() {
       </nav>
 
       <div className="ml-auto flex items-center gap-2">
-        <div className="hidden md:flex items-center gap-3 rounded-full bg-card border border-card-border px-3 py-1.5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Power className={`size-3.5 ${status.open ? "text-emerald-500" : "text-muted-foreground"}`} />
-            <span className="text-xs text-muted-foreground">Open</span>
-            <Switch
-              checked={status.open}
-              onCheckedChange={(v) => setStatus({ open: v })}
-              data-testid="switch-open"
-            />
-          </div>
-          <div className="h-4 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <Flame className={`size-3.5 ${status.busy ? "text-primary" : "text-muted-foreground"}`} />
-            <span className="text-xs text-muted-foreground">Busy</span>
-            <Switch
-              checked={status.busy}
-              onCheckedChange={(v) => setStatus({ busy: v })}
-              data-testid="switch-busy"
-            />
-          </div>
-          <div className="h-4 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <Pause className={`size-3.5 ${status.paused ? "text-destructive" : "text-muted-foreground"}`} />
-            <span className="text-xs text-muted-foreground">Pause</span>
-            <Switch
-              checked={status.paused}
-              onCheckedChange={(v) => setStatus({ paused: v })}
-              data-testid="switch-paused"
-            />
-          </div>
+        <div className="hidden md:flex items-center gap-2 rounded-full bg-card border border-card-border pl-3 pr-1.5 py-1.5 shadow-sm">
+          <div className={`size-1.5 rounded-full ${statusDot}`} />
+          <span className="text-xs font-medium pr-1">{statusLabel}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-xs hover-elevate active-elevate-2"
+                data-testid="button-status-menu"
+              >
+                Manage <ChevronDown className="size-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuLabel>Restaurant status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5 space-y-2">
+                <Row icon={<Power className="size-3.5 text-emerald-500" />} label="Open">
+                  <Switch checked={status.open} onCheckedChange={(v) => setStatus({ open: v })} data-testid="switch-open" />
+                </Row>
+                <Row icon={<Flame className="size-3.5 text-primary" />} label="Busy mode">
+                  <Switch checked={status.busy} onCheckedChange={(v) => setStatus({ busy: v })} data-testid="switch-busy" />
+                </Row>
+                <Row icon={<Pause className="size-3.5 text-destructive" />} label="Pause new orders">
+                  <Switch checked={status.paused} onCheckedChange={(v) => setStatus({ paused: v })} data-testid="switch-paused" />
+                </Row>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <button
-          className="size-10 rounded-full bg-card border border-card-border flex items-center justify-center hover-elevate active-elevate-2"
-          aria-label="Search"
-          data-testid="button-search"
-        >
-          <Search className="size-4" />
-        </button>
-        <button
-          className="relative size-10 rounded-full bg-card border border-card-border flex items-center justify-center hover-elevate active-elevate-2"
-          aria-label="Notifications"
-          data-testid="button-notifications"
-        >
-          <Bell className="size-4" />
-          <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
-        </button>
-        <button
-          className="size-10 rounded-full bg-card border border-card-border flex items-center justify-center hover-elevate active-elevate-2"
-          aria-label="Info"
-          data-testid="button-info"
-        >
-          <Info className="size-4" />
-        </button>
+        <div className="hidden md:flex items-center gap-2 rounded-full bg-card border border-card-border px-3 py-1.5 shadow-sm">
+          <Search className="size-3.5 text-muted-foreground" />
+          <input
+            placeholder="Search orders, menu, tickets…"
+            className="bg-transparent text-sm outline-none placeholder:text-muted-foreground w-48"
+            data-testid="input-global-search"
+          />
+        </div>
 
-        <button
-          className="flex items-center gap-2 rounded-full bg-card border border-card-border pl-1 pr-3 py-1 shadow-sm hover-elevate active-elevate-2"
-          data-testid="button-profile"
-        >
-          <div className="size-8 rounded-full bg-gradient-to-br from-primary to-amber-400 text-primary-foreground flex items-center justify-center text-sm font-semibold">
-            SR
-          </div>
-          <div className="text-left leading-tight">
-            <div className="text-sm font-medium">{restaurantProfile.ownerName}</div>
-            <div className="text-[11px] text-muted-foreground">{restaurantProfile.ownerEmail}</div>
-          </div>
-          <ChevronDown className="size-3.5 text-muted-foreground" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="relative size-10 rounded-full bg-card border border-card-border flex items-center justify-center hover-elevate active-elevate-2"
+              aria-label="Notifications"
+              data-testid="button-notifications"
+            >
+              <Bell className="size-4" />
+              <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Notifications</TooltipContent>
+        </Tooltip>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="flex items-center gap-2 rounded-full bg-card border border-card-border pl-1 pr-3 py-1 shadow-sm hover-elevate active-elevate-2"
+              data-testid="button-profile"
+            >
+              <div className="size-8 rounded-full bg-gradient-to-br from-primary to-amber-400 text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                SR
+              </div>
+              <div className="text-left leading-tight hidden sm:block">
+                <div className="text-sm font-medium">{restaurantProfile.ownerName}</div>
+                <div className="text-[11px] text-muted-foreground">{restaurantProfile.ownerEmail}</div>
+              </div>
+              <ChevronDown className="size-3.5 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="cursor-pointer">
+                <SettingsIcon className="size-4 mr-2" /> Restaurant settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/support" className="cursor-pointer">
+                <Bell className="size-4 mr-2" /> My tickets
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive">Sign out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
+  );
+}
+
+function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-1">
+      <div className="flex items-center gap-2 text-sm">
+        {icon}
+        <span>{label}</span>
+      </div>
+      {children}
+    </div>
   );
 }

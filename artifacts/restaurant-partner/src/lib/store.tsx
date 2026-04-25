@@ -10,6 +10,10 @@ import {
   type FlashDeal,
   type Offer,
   type SupportTicket,
+  type TicketStatus,
+  type TicketPriority,
+  type TicketSource,
+  type TicketIssueType,
   type MenuItem,
 } from "./mockData";
 
@@ -36,6 +40,7 @@ type Ctx = {
   upsertMenuItem: (item: MenuItem) => void;
   deleteMenuItem: (id: string) => void;
   bulkSetPrep: (minutes: number) => void;
+  setMenuImage: (id: string, dataUrl: string) => void;
 
   flashDeals: FlashDeal[];
   flashEnabled: boolean;
@@ -49,9 +54,18 @@ type Ctx = {
   deleteOffer: (id: string) => void;
 
   tickets: SupportTicket[];
-  createTicket: (subject: string, priority: SupportTicket["priority"], message: string) => void;
-  appendMessage: (id: string, text: string) => void;
-  setTicketStatus: (id: string, status: SupportTicket["status"]) => void;
+  createTicket: (input: {
+    subject: string;
+    priority: TicketPriority;
+    source: TicketSource;
+    issueType: TicketIssueType;
+    message: string;
+    orderRef?: string;
+  }) => void;
+  appendMessage: (id: string, text: string, internal?: boolean) => void;
+  setTicketStatus: (id: string, status: TicketStatus) => void;
+  setTicketPriority: (id: string, priority: TicketPriority) => void;
+  assignTicket: (id: string, agent: string) => void;
 };
 
 const StoreCtx = createContext<Ctx | null>(null);
@@ -107,6 +121,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       deleteMenuItem: (id) => setMenu((arr) => arr.filter((m) => m.id !== id)),
       bulkSetPrep: (minutes) => setMenu((arr) => arr.map((m) => ({ ...m, prepMinutes: minutes }))),
+      setMenuImage: (id, dataUrl) =>
+        setMenu((arr) => arr.map((m) => (m.id === id ? { ...m, imageUrl: dataUrl } : m))),
 
       flashDeals,
       flashEnabled,
@@ -135,27 +151,74 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteOffer: (id) => setOffers((arr) => arr.filter((o) => o.id !== id)),
 
       tickets,
-      createTicket: (subject, priority, message) =>
+      createTicket: ({ subject, priority, source, issueType, message, orderRef }) =>
         setTickets((arr) => [
           {
-            id: `t${Date.now()}`,
+            id: `TKT-${Math.floor(Math.random() * 9000) + 1000}`,
             subject,
             priority,
             status: "open",
+            source,
+            issueType,
             createdAt: new Date().toISOString(),
-            messages: [{ from: "you", text: message, at: new Date().toISOString() }],
+            updatedAt: new Date().toISOString(),
+            user: { name: "Sajibur Rahman", email: "sajibur.rahman@saffronsmoke.co" },
+            orderRef,
+            messages: [
+              {
+                id: `m${Date.now()}`,
+                from: "you",
+                authorName: "Sajibur Rahman",
+                text: message,
+                at: new Date().toISOString(),
+              },
+            ],
           },
           ...arr,
         ]),
-      appendMessage: (id, text) =>
+      appendMessage: (id, text, internal) =>
         setTickets((arr) =>
           arr.map((t) =>
             t.id === id
-              ? { ...t, messages: [...t.messages, { from: "you", text, at: new Date().toISOString() }] }
+              ? {
+                  ...t,
+                  updatedAt: new Date().toISOString(),
+                  messages: [
+                    ...t.messages,
+                    {
+                      id: `m${Date.now()}`,
+                      from: "you",
+                      authorName: "Sajibur Rahman",
+                      text,
+                      internal,
+                      at: new Date().toISOString(),
+                    },
+                  ],
+                }
               : t,
           ),
         ),
-      setTicketStatus: (id, st) => setTickets((arr) => arr.map((t) => (t.id === id ? { ...t, status: st } : t))),
+      setTicketStatus: (id, st) =>
+        setTickets((arr) =>
+          arr.map((t) =>
+            t.id === id
+              ? {
+                  ...t,
+                  status: st,
+                  resolvedAt: st === "resolved" ? new Date().toISOString() : t.resolvedAt,
+                  updatedAt: new Date().toISOString(),
+                }
+              : t,
+          ),
+        ),
+      setTicketPriority: (id, priority) =>
+        setTickets((arr) => arr.map((t) => (t.id === id ? { ...t, priority, updatedAt: new Date().toISOString() } : t))),
+      assignTicket: (id, agent) =>
+        setTickets((arr) =>
+          arr.map((t) =>
+            t.id === id ? { ...t, assignedTo: agent === "Unassigned" ? undefined : agent, updatedAt: new Date().toISOString() } : t,
+          ),
+        ),
     }),
     [status, orders, menu, flashDeals, flashEnabled, offers, tickets],
   );

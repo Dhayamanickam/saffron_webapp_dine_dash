@@ -1,0 +1,222 @@
+You are improving an existing Restaurant Partner Web App built using React and Tailwind CSS.
+
+The base UI is already implemented from reference design images. You MUST strictly maintain the same color system and typography. Only improve layout, usability, structure, and UI quality to make it more premium and production-ready.
+
+Do NOT redesign colors or fonts.
+
+---
+
+🎯 GOAL:
+Enhance the web app with better UX, improved layout structure, advanced support system, and richer content display (including food images).
+
+---
+
+## 🖼️ 1. FOOD IMAGE MANAGEMENT (NEW)
+
+### Add support in Menu Management:
+
+* Upload food images
+* Display thumbnails in:
+
+  * Menu list
+  * Item detail view
+* Maintain consistent aspect ratio
+* Add fallback image if missing
+
+---
+
+## 🧭 2. HEADER + NAVIGATION IMPROVEMENT
+
+### Current Issue:
+
+Top options are scattered and inconsistent
+
+### Fix:
+
+* Move all top-level actions to a single structured header
+* Header should include:
+
+  * Search bar
+  * Notifications
+  * Profile menu
+  * Restaurant status toggle
+
+---
+
+## 🧱 3. SIDEBAR + ICON SYSTEM
+
+### Improvements:
+
+* Add icons to all sidebar items
+* Ensure consistent icon style (size, stroke)
+* Align icons + labels properly
+
+### Sidebar items:
+
+* Dashboard
+* Orders
+* Menu
+* Flash Food
+* Offers
+* Delivery
+* Reports
+* Support
+* Settings
+
+---
+
+## 📊 4. PAGE STRUCTURE IMPROVEMENT
+
+For ALL pages:
+
+### Add:
+
+* Page title
+* Short description (what this page does)
+* Top action bar (filters, search, CTA)
+
+---
+
+### Improve:
+
+* Spacing consistency (8px grid)
+* Section grouping (cards with padding)
+* Clear visual hierarchy
+
+---
+
+## 🎨 5. PREMIUM UI IMPROVEMENTS (NO COLOR CHANGE)
+
+### Add:
+
+* Subtle shadows for cards
+* Better spacing between sections
+* Clean dividers
+* Consistent border radius
+
+---
+
+### Fix:
+
+* Alignment issues
+* Overflow problems
+* Uneven paddings
+
+---
+
+## 📋 6. TABLE UX IMPROVEMENTS
+
+* Sticky headers
+* Row hover states
+* Better spacing between rows
+* Status badges (color-coded)
+
+---
+
+## 🎫 7. ADVANCED SUPPORT SYSTEM (CRITICAL UPGRADE)
+
+### Add full support module:
+
+#### Ticket Dashboard:
+
+* Total tickets
+* Open tickets
+* High priority tickets
+* Avg resolution time
+
+---
+
+#### Ticket List:
+
+Columns:
+
+* Ticket ID
+* Source (customer / delivery / restaurant)
+* Issue type
+* Priority
+* Status
+* Created time
+
+---
+
+#### Ticket Detail View:
+
+* Chat/message thread UI
+* Order reference
+* User details
+* Attachments
+
+---
+
+#### Actions:
+
+* Assign ticket
+* Change priority
+* Mark resolved
+* Add internal notes
+
+---
+
+#### Extra Features:
+
+* Filters (status, priority)
+* Search
+* Quick reply templates
+
+---
+
+## 🧩 8. DATA RICHNESS (IMPORTANT)
+
+Every page must include:
+
+* Informational stats
+* Context (not just tables)
+* Meaningful labels
+
+---
+
+## ⚙️ 9. COMPONENT REFINEMENT
+
+Refactor:
+
+* Cards
+* Tables
+* Buttons
+* Modals
+
+Ensure:
+
+* Reusability
+* Consistency
+
+---
+
+## ✨ 10. UX DETAILS
+
+* Smooth transitions
+* Loading skeletons
+* Empty states
+* Tooltips for actions
+
+---
+
+## ⚠️ CONSTRAINTS
+
+* Do NOT change colors
+* Do NOT change typography
+* Maintain original design system
+* Only improve layout, spacing, and usability
+
+---
+
+## 🚀 OUTPUT
+
+* Premium-looking admin web app
+* Clean layout and hierarchy
+* Fully upgraded support system
+* Better usability and accessibility
+* Scalable component structure
+
+---
+
+If any UI detail is unclear, improve using modern admin dashboard UX best practices while staying consistent with the existing design.

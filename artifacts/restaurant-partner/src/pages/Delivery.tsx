@@ -2,18 +2,40 @@ import { useStore } from "@/lib/store";
 import { SectionPanel } from "@/components/SectionPanel";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { StatStrip } from "@/components/StatStrip";
 import { Button } from "@/components/ui/button";
 import { deliveryPartners } from "@/lib/mockData";
-import { Bike, MapPin, Phone, PackageCheck, Truck } from "lucide-react";
+import { Bike, MapPin, Phone, PackageCheck, Truck, Users, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { minutesAgoLabel, usd } from "@/lib/format";
 
 export default function Delivery() {
   const { orders, advanceOrder, assignPartner, reportDelay } = useStore();
   const inFlight = orders.filter((o) => o.status === "preparing" || o.status === "ready");
+  const readyToDispatch = orders.filter((o) => o.status === "ready").length;
+  const availableCouriers = deliveryPartners.filter((p) => p.status === "available").length;
+  const onRun = deliveryPartners.filter((p) => p.status === "busy").length;
+  const avgDispatch =
+    inFlight.length === 0 ? "—" : `${Math.round(inFlight.reduce((s, o) => s + o.prepMinutes, 0) / inFlight.length)} min`;
 
   return (
-    <div className="grid grid-cols-12 gap-4">
+    <div className="space-y-4">
+      <PageHeader
+        title="Delivery"
+        description="Coordinate hand-offs to your courier roster, track in-flight orders, and flag delays before customers notice."
+      />
+
+      <StatStrip
+        items={[
+          { label: "In flight", value: String(inFlight.length), icon: Truck, hint: `${readyToDispatch} ready` },
+          { label: "Available couriers", value: String(availableCouriers), icon: Users, hint: `${onRun} on a run` },
+          { label: "Avg dispatch", value: avgDispatch, icon: Timer },
+          { label: "Total today", value: String(orders.length), icon: PackageCheck, accent: true },
+        ]}
+      />
+
+      <div className="grid grid-cols-12 gap-4">
       <div className="col-span-12 md:col-span-8 space-y-4">
         <SectionPanel title="Delivery coordination" subtitle="Hand off ready orders to your courier partners.">
           {inFlight.length === 0 ? (
@@ -116,7 +138,7 @@ export default function Delivery() {
       </div>
 
       <div className="col-span-12 md:col-span-4">
-        <SectionPanel title="Couriers" subtitle="Today's roster">
+        <SectionPanel title="Couriers" subtitle={`${deliveryPartners.length} on shift today`}>
           <div className="space-y-3">
             {deliveryPartners.map((p) => (
               <div key={p.id} className="flex items-center gap-3" data-testid={`courier-${p.id}`}>
@@ -135,6 +157,7 @@ export default function Delivery() {
             ))}
           </div>
         </SectionPanel>
+      </div>
       </div>
     </div>
   );

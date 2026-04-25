@@ -3,7 +3,10 @@ import { useStore } from "@/lib/store";
 import { SectionPanel } from "@/components/SectionPanel";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { StatStrip } from "@/components/StatStrip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +21,10 @@ import {
   AlertTriangle,
   Inbox,
   Bike,
+  ShoppingBag,
+  Flame,
+  Wallet,
+  Download,
 } from "lucide-react";
 import { minutesAgoLabel, usd } from "@/lib/format";
 import { toast } from "sonner";
@@ -51,11 +58,42 @@ export default function Orders() {
     });
   }, [orders, tab, q]);
 
+  const newCount = orders.filter((o) => o.status === "new").length;
+  const prepCount = orders.filter((o) => o.status === "preparing").length;
+  const readyCount = orders.filter((o) => o.status === "ready").length;
+  const todayRevenue = orders.reduce((s, o) => s + o.total, 0);
+
   return (
     <div className="space-y-4">
-      <SectionPanel
+      <PageHeader
         title="Orders"
-        subtitle="Live queue — accept, prep, dispatch."
+        description="Live queue — accept new orders, monitor prep, and hand off to couriers without losing context."
+        actions={
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" className="rounded-full" data-testid="button-export-orders">
+                  <Download className="size-4 mr-1" /> Export
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Export today's queue (CSV)</TooltipContent>
+            </Tooltip>
+          </>
+        }
+      />
+
+      <StatStrip
+        items={[
+          { label: "New", value: String(newCount), icon: Inbox, hint: "Awaiting accept" },
+          { label: "Preparing", value: String(prepCount), icon: Flame, hint: "In the kitchen" },
+          { label: "Ready", value: String(readyCount), icon: PackageCheck, hint: "For courier pickup" },
+          { label: "Revenue today", value: usd(todayRevenue), icon: Wallet, accent: true },
+        ]}
+      />
+
+      <SectionPanel
+        title="Queue"
+        subtitle="Switch tabs to filter the queue."
         actions={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5">

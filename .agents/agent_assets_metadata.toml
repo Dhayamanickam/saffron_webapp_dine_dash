@@ -1,0 +1,50 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "0Ow6xIom_H85_zYJSPtGz"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/lamb-chops.png"
+type = "image"
+title = "lamb-chops dish photo"
+
+[[generated]]
+id = "_y2-UpUrRzbw8rhbvdmJ6"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/butter-chicken.png"
+type = "image"
+title = "butter-chicken dish photo"
+
+[[generated]]
+id = "5nx9S1Qwu1hTyysC_uNMf"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/paneer-tikka.png"
+type = "image"
+title = "paneer-tikka dish photo"
+
+[[generated]]
+id = "v4NFXsQxfEnYFsrfFpd2W"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/saffron-biryani.png"
+type = "image"
+title = "saffron-biryani dish photo"
+
+[[generated]]
+id = "tTL2WEmcciGgJlpEDyg8U"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/tandoori-cauliflower.png"
+type = "image"
+title = "tandoori-cauliflower dish photo"
+
+[[generated]]
+id = "mnKeaTgw_ocHj529bmJc1"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/truffle-naan.png"
+type = "image"
+title = "truffle-naan dish photo"
+
+[[generated]]
+id = "C68UqJGy5dxMQNicAoD21"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/mango-lassi.png"
+type = "image"
+title = "mango-lassi dish photo"
+
+[[generated]]
+id = "ewdoiv9ffy0g4P_LKth4-"
+uri = "file://artifacts/restaurant-partner/src/assets/dishes/chili-cheese-kulcha.png"
+type = "image"
+title = "chili-cheese-kulcha dish photo"
