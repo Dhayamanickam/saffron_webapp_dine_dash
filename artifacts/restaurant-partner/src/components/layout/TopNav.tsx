@@ -37,13 +37,23 @@ export function TopNav() {
         : "bg-muted-foreground";
 
   return (
-    <header className="flex items-center gap-3 px-2" data-testid="top-nav">
+    <header className="flex items-center gap-2 sm:gap-3 px-1 sm:px-2" data-testid="top-nav">
       <div className="flex items-center gap-2 rounded-full bg-card border border-card-border px-2 py-1.5 shadow-sm">
         <div className="size-8 rounded-full bg-primary flex items-center justify-center">
           <Flame className="size-4 text-primary-foreground" />
         </div>
-        <span className="hidden lg:inline pr-2 text-sm font-semibold tracking-tight">Saffron</span>
+        <span className="hidden md:inline pr-2 text-sm font-semibold tracking-tight">Saffron</span>
       </div>
+
+      <button
+        className="md:hidden inline-flex items-center gap-1.5 rounded-full bg-card border border-card-border px-2.5 py-1.5 shadow-sm hover-elevate active-elevate-2"
+        data-testid="button-status-mobile"
+        onClick={() => setStatus({ open: !status.open })}
+        aria-label="Toggle restaurant status"
+      >
+        <span className={`size-1.5 rounded-full ${statusDot}`} />
+        <span className="text-[11px] font-medium">{statusLabel}</span>
+      </button>
 
       <nav className="hidden lg:flex items-center gap-1 rounded-full bg-card border border-card-border px-1.5 py-1.5 shadow-sm">
         {links.map((l) => {
@@ -66,7 +76,7 @@ export function TopNav() {
         })}
       </nav>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
         <div className="hidden md:flex items-center gap-2 rounded-full bg-card border border-card-border pl-3 pr-1.5 py-1.5 shadow-sm">
           <div className={`size-1.5 rounded-full ${statusDot}`} />
           <span className="text-xs font-medium pr-1">{statusLabel}</span>
@@ -109,12 +119,12 @@ export function TopNav() {
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              className="relative size-10 rounded-full bg-card border border-card-border flex items-center justify-center hover-elevate active-elevate-2"
+              className="relative size-9 sm:size-10 rounded-full bg-card border border-card-border flex items-center justify-center hover-elevate active-elevate-2"
               aria-label="Notifications"
               data-testid="button-notifications"
             >
               <Bell className="size-4" />
-              <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
+              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 size-2 rounded-full bg-primary" />
             </button>
           </TooltipTrigger>
           <TooltipContent>Notifications</TooltipContent>
@@ -123,17 +133,17 @@ export function TopNav() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="flex items-center gap-2 rounded-full bg-card border border-card-border pl-1 pr-3 py-1 shadow-sm hover-elevate active-elevate-2"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-card border border-card-border pl-1 pr-2 sm:pr-3 py-1 shadow-sm hover-elevate active-elevate-2"
               data-testid="button-profile"
             >
-              <div className="size-8 rounded-full bg-gradient-to-br from-primary to-amber-400 text-primary-foreground flex items-center justify-center text-sm font-semibold">
+              <div className="size-7 sm:size-8 rounded-full bg-gradient-to-br from-primary to-amber-400 text-primary-foreground flex items-center justify-center text-xs sm:text-sm font-semibold">
                 SR
               </div>
-              <div className="text-left leading-tight hidden sm:block">
+              <div className="text-left leading-tight hidden lg:block">
                 <div className="text-sm font-medium">{restaurantProfile.ownerName}</div>
                 <div className="text-[11px] text-muted-foreground">{restaurantProfile.ownerEmail}</div>
               </div>
-              <ChevronDown className="size-3.5 text-muted-foreground" />
+              <ChevronDown className="size-3.5 text-muted-foreground hidden sm:block" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

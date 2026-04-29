@@ -8,16 +8,18 @@ type Props = {
 
 export function PageHeader({ title, description, actions }: Props) {
   return (
-    <header className="rounded-2xl bg-card border border-card-border shadow-sm px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <header className="rounded-2xl bg-card border border-card-border shadow-sm px-4 sm:px-6 py-4 sm:py-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight" data-testid="page-title">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight" data-testid="page-title">
           {title}
         </h1>
         {description && (
-          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{description}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl">{description}</p>
         )}
       </div>
-      {actions && <div className="flex items-center gap-2 flex-wrap">{actions}</div>}
+      {actions && (
+        <div className="flex items-center gap-2 flex-wrap [&>*]:shrink-0">{actions}</div>
+      )}
     </header>
   );
 }

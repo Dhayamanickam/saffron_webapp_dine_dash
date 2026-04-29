@@ -95,14 +95,14 @@ export default function Orders() {
         title="Queue"
         subtitle="Switch tabs to filter the queue."
         actions={
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 w-full sm:w-auto">
               <Search className="size-3.5 text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search orders"
-                className="bg-transparent text-sm outline-none placeholder:text-muted-foreground w-44"
+                className="bg-transparent text-sm outline-none placeholder:text-muted-foreground w-full sm:w-44"
                 data-testid="input-search-orders"
               />
             </div>
@@ -110,18 +110,20 @@ export default function Orders() {
         }
       >
         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-          <TabsList className="bg-secondary rounded-full p-1">
-            {tabs.map((t) => (
-              <TabsTrigger
-                key={t.id}
-                value={t.id}
-                className="rounded-full px-4 py-1.5 text-sm data-[state=active]:bg-foreground data-[state=active]:text-background"
-                data-testid={`tab-${t.id}`}
-              >
-                {t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="-mx-1 overflow-x-auto pb-1">
+            <TabsList className="bg-secondary rounded-full p-1 inline-flex w-max">
+              {tabs.map((t) => (
+                <TabsTrigger
+                  key={t.id}
+                  value={t.id}
+                  className="rounded-full px-3.5 py-1.5 text-sm data-[state=active]:bg-foreground data-[state=active]:text-background whitespace-nowrap"
+                  data-testid={`tab-${t.id}`}
+                >
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
         </Tabs>
       </SectionPanel>
 
