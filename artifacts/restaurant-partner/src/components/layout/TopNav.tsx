@@ -1,7 +1,14 @@
 import { Link, useLocation } from "wouter";
-import { Bell, Search, ChevronDown, Power, Pause, Flame, Settings as SettingsIcon } from "lucide-react";
+import {
+  Bell,
+  Search,
+  ChevronDown,
+  Power,
+  Pause,
+  Flame,
+  Settings as SettingsIcon,
+} from "lucide-react";
 import { useStore } from "@/lib/store";
-import { restaurantProfile } from "@/lib/mockData";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -11,7 +18,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const links = [
   { to: "/", label: "Dashboard" },
@@ -24,10 +35,17 @@ const links = [
 ];
 
 export function TopNav() {
+  const { restaurantProfile } = useStore();
   const [location] = useLocation();
   const { status, setStatus } = useStore();
 
-  const statusLabel = status.paused ? "Paused" : status.busy ? "Busy" : status.open ? "Open" : "Closed";
+  const statusLabel = status.paused
+    ? "Paused"
+    : status.busy
+      ? "Busy"
+      : status.open
+        ? "Open"
+        : "Closed";
   const statusDot = status.paused
     ? "bg-destructive"
     : status.busy
@@ -37,12 +55,17 @@ export function TopNav() {
         : "bg-muted-foreground";
 
   return (
-    <header className="flex items-center gap-2 sm:gap-3 px-1 sm:px-2" data-testid="top-nav">
+    <header
+      className="flex items-center gap-2 sm:gap-3 px-1 sm:px-2"
+      data-testid="top-nav"
+    >
       <div className="flex items-center gap-2 rounded-full bg-card border border-card-border px-2 py-1.5 shadow-sm">
         <div className="size-8 rounded-full bg-primary flex items-center justify-center">
           <Flame className="size-4 text-primary-foreground" />
         </div>
-        <span className="hidden md:inline pr-2 text-sm font-semibold tracking-tight">Saffron</span>
+        <span className="hidden md:inline pr-2 text-sm font-semibold tracking-tight">
+          Saffron
+        </span>
       </div>
 
       <button
@@ -57,7 +80,8 @@ export function TopNav() {
 
       <nav className="hidden lg:flex items-center gap-1 rounded-full bg-card border border-card-border px-1.5 py-1.5 shadow-sm">
         {links.map((l) => {
-          const active = l.to === "/" ? location === "/" : location.startsWith(l.to);
+          const active =
+            l.to === "/" ? location === "/" : location.startsWith(l.to);
           return (
             <Link
               key={l.to}
@@ -93,14 +117,35 @@ export function TopNav() {
               <DropdownMenuLabel>Restaurant status</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="px-2 py-1.5 space-y-2">
-                <Row icon={<Power className="size-3.5 text-emerald-500" />} label="Open">
-                  <Switch checked={status.open} onCheckedChange={(v) => setStatus({ open: v })} data-testid="switch-open" />
+                <Row
+                  icon={<Power className="size-3.5 text-emerald-500" />}
+                  label="Open"
+                >
+                  <Switch
+                    checked={status.open}
+                    onCheckedChange={(v) => setStatus({ open: v })}
+                    data-testid="switch-open"
+                  />
                 </Row>
-                <Row icon={<Flame className="size-3.5 text-primary" />} label="Busy mode">
-                  <Switch checked={status.busy} onCheckedChange={(v) => setStatus({ busy: v })} data-testid="switch-busy" />
+                <Row
+                  icon={<Flame className="size-3.5 text-primary" />}
+                  label="Busy mode"
+                >
+                  <Switch
+                    checked={status.busy}
+                    onCheckedChange={(v) => setStatus({ busy: v })}
+                    data-testid="switch-busy"
+                  />
                 </Row>
-                <Row icon={<Pause className="size-3.5 text-destructive" />} label="Pause new orders">
-                  <Switch checked={status.paused} onCheckedChange={(v) => setStatus({ paused: v })} data-testid="switch-paused" />
+                <Row
+                  icon={<Pause className="size-3.5 text-destructive" />}
+                  label="Pause new orders"
+                >
+                  <Switch
+                    checked={status.paused}
+                    onCheckedChange={(v) => setStatus({ paused: v })}
+                    data-testid="switch-paused"
+                  />
                 </Row>
               </div>
             </DropdownMenuContent>
@@ -140,8 +185,12 @@ export function TopNav() {
                 SR
               </div>
               <div className="text-left leading-tight hidden lg:block">
-                <div className="text-sm font-medium">{restaurantProfile.ownerName}</div>
-                <div className="text-[11px] text-muted-foreground">{restaurantProfile.ownerEmail}</div>
+                <div className="text-sm font-medium">
+                  {restaurantProfile!.ownerName}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {restaurantProfile!.email}
+                </div>
               </div>
               <ChevronDown className="size-3.5 text-muted-foreground hidden sm:block" />
             </button>
@@ -160,7 +209,9 @@ export function TopNav() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Sign out</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive">
+              Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -168,7 +219,15 @@ export function TopNav() {
   );
 }
 
-function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+function Row({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-2 px-1">
       <div className="flex items-center gap-2 text-sm">

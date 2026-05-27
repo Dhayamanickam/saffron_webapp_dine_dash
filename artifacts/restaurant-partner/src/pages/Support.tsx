@@ -27,7 +27,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Plus,
   Search,
@@ -49,13 +53,22 @@ type PriorityFilter = "all" | TicketPriority;
 type SourceFilter = "all" | TicketSource;
 
 export default function Support() {
-  const { tickets, createTicket, appendMessage, setTicketStatus, setTicketPriority, assignTicket } = useStore();
+  const {
+    tickets,
+    createTicket,
+    appendMessage,
+    setTicketStatus,
+    setTicketPriority,
+    assignTicket,
+  } = useStore();
 
   const [statusF, setStatusF] = useState<StatusFilter>("all");
   const [priorityF, setPriorityF] = useState<PriorityFilter>("all");
   const [sourceF, setSourceF] = useState<SourceFilter>("all");
   const [q, setQ] = useState("");
-  const [openId, setOpenId] = useState<string | null>(tickets[0]?.id ?? null);
+  const [openId, setOpenId] = useState<string | null>(
+    tickets[0]?.ticketId ?? null,
+  );
   const [openCreate, setOpenCreate] = useState(false);
 
   const filtered = useMemo(() => {
@@ -67,7 +80,7 @@ export default function Support() {
         const needle = q.toLowerCase();
         if (
           !t.subject.toLowerCase().includes(needle) &&
-          !t.id.toLowerCase().includes(needle) &&
+          !t.ticketId.toLowerCase().includes(needle) &&
           !t.user.name.toLowerCase().includes(needle)
         )
           return false;
@@ -76,15 +89,26 @@ export default function Support() {
     });
   }, [tickets, statusF, priorityF, sourceF, q]);
 
-  const open = filtered.find((t) => t.id === openId) ?? filtered[0] ?? null;
+  const open =
+    filtered.find((t) => t.ticketId === openId) ?? filtered[0] ?? null;
 
   const total = tickets.length;
-  const openCount = tickets.filter((t) => t.status === "open").length;
-  const highPriority = tickets.filter((t) => t.priority === "high" || t.priority === "urgent").length;
+  const openCount = tickets.filter((t) => t.status === "Open").length;
+  const highPriority = tickets.filter(
+    (t) => t.priority === "High" || t.priority === "Urgent",
+  ).length;
   const avgResolution = useMemo(() => {
     const resolved = tickets.filter((t) => t.resolvedAt);
     if (resolved.length === 0) return "—";
-    const totalMs = resolved.reduce((s, t) => s + (new Date(t.resolvedAt!).getTime() - new Date(t.createdAt).getTime()), 0);
+    const totalMs = resolved.reduce((s, t) => {
+      if (!t.resolvedAt || !t.createdAt) return s;
+
+      const resolutionTime =
+        new Date(t.resolvedAt.toString()).getTime() -
+        new Date(t.createdAt.toString()).getTime();
+
+      return s + resolutionTime;
+    }, 0);
     const avgMin = totalMs / resolved.length / 60000;
     if (avgMin < 60) return `${Math.round(avgMin)} min`;
     const h = avgMin / 60;
@@ -100,7 +124,10 @@ export default function Support() {
         actions={
           <Dialog open={openCreate} onOpenChange={setOpenCreate}>
             <DialogTrigger asChild>
-              <Button className="rounded-full bg-foreground text-background hover-elevate active-elevate-2" data-testid="button-new-ticket">
+              <Button
+                className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
+                data-testid="button-new-ticket"
+              >
                 <Plus className="size-4 mr-1" /> Raise ticket
               </Button>
             </DialogTrigger>
@@ -117,9 +144,24 @@ export default function Support() {
 
       <StatStrip
         items={[
-          { label: "Total tickets", value: String(total), icon: Inbox, hint: `${tickets.filter((t) => t.status === "resolved").length} resolved` },
-          { label: "Open", value: String(openCount), icon: Timer, hint: `${tickets.filter((t) => t.status === "in_progress").length} in progress` },
-          { label: "High priority", value: String(highPriority), icon: AlertOctagon, accent: true },
+          {
+            label: "Total tickets",
+            value: String(total),
+            icon: Inbox,
+            hint: `${tickets.filter((t) => t.status === "Resolved").length} resolved`,
+          },
+          {
+            label: "Open",
+            value: String(openCount),
+            icon: Timer,
+            hint: `${tickets.filter((t) => t.status === "In progress").length} in progress`,
+          },
+          {
+            label: "High priority",
+            value: String(highPriority),
+            icon: AlertOctagon,
+            accent: true,
+          },
           { label: "Avg resolution", value: avgResolution, icon: CheckCircle2 },
         ]}
       />
@@ -182,7 +224,10 @@ export default function Support() {
 
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 lg:col-span-7">
-          <SectionPanel title={`Tickets (${filtered.length})`} subtitle="Click a row to view the conversation.">
+          <SectionPanel
+            title={`Tickets (${filtered.length})`}
+            subtitle="Click a row to view the conversation."
+          >
             <div className="overflow-x-auto -mx-2">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 z-10">
@@ -192,42 +237,57 @@ export default function Support() {
                     <th className="font-medium py-2 px-2">Issue</th>
                     <th className="font-medium py-2 px-2">Priority</th>
                     <th className="font-medium py-2 px-2">Status</th>
-                    <th className="font-medium py-2 px-2 text-right">Updated</th>
+                    <th className="font-medium py-2 px-2 text-right">
+                      Updated
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                      <td
+                        colSpan={6}
+                        className="py-12 text-center text-muted-foreground"
+                      >
                         <Inbox className="size-6 mx-auto mb-2 opacity-50" />
                         No tickets match these filters.
                       </td>
                     </tr>
                   )}
                   {filtered.map((t) => {
-                    const active = open?.id === t.id;
+                    const active = open?.ticketId === t.ticketId;
                     return (
                       <tr
-                        key={t.id}
+                        key={t.ticketId}
                         className={[
                           "cursor-pointer border-t border-card-border transition-colors",
                           active ? "bg-secondary" : "hover:bg-secondary/60",
                         ].join(" ")}
-                        onClick={() => setOpenId(t.id)}
-                        data-testid={`row-ticket-${t.id}`}
+                        onClick={() => setOpenId(t.ticketId)}
+                        data-testid={`row-ticket-${t.ticketId}`}
                       >
                         <td className="py-3 px-2">
-                          <div className="font-medium leading-tight">{t.subject}</div>
+                          <div className="font-medium leading-tight">
+                            {t.subject}
+                          </div>
                           <div className="text-[11px] text-muted-foreground mt-0.5">
-                            {t.id} • {t.user.name}
+                            {t.ticketId} • {t.user.name}
                           </div>
                         </td>
-                        <td className="py-3 px-2"><SourceTag s={t.source} /></td>
-                        <td className="py-3 px-2 text-xs">{issueTypeLabels[t.issueType]}</td>
-                        <td className="py-3 px-2"><PriorityTag p={t.priority} /></td>
-                        <td className="py-3 px-2"><StatusTag s={t.status} /></td>
+                        <td className="py-3 px-2">
+                          <SourceTag s={t.source} />
+                        </td>
+                        <td className="py-3 px-2 text-xs">
+                          {issueTypeLabels[t.issueType]}
+                        </td>
+                        <td className="py-3 px-2">
+                          <PriorityTag p={t.priority} />
+                        </td>
+                        <td className="py-3 px-2">
+                          <StatusTag s={t.status} />
+                        </td>
                         <td className="py-3 px-2 text-right text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                          {fmtTimeAgo(t.updatedAt)}
+                          {fmtTimeAgo(t.updatedAt.toString())}
                         </td>
                       </tr>
                     );
@@ -243,20 +303,22 @@ export default function Support() {
             <TicketDetail
               ticket={open}
               onReply={(text, internal) => {
-                appendMessage(open.id, text, internal);
+                appendMessage(open.ticketId, text, internal);
                 toast.success(internal ? "Internal note added" : "Reply sent");
               }}
               onStatus={(s) => {
-                setTicketStatus(open.id, s);
+                setTicketStatus(open.ticketId, s);
                 toast.message(`Marked ${s.replace("_", " ")}`);
               }}
               onPriority={(p) => {
-                setTicketPriority(open.id, p);
+                setTicketPriority(open.ticketId, p);
                 toast.message(`Priority set to ${p}`);
               }}
               onAssign={(a) => {
-                assignTicket(open.id, a);
-                toast.message(a === "Unassigned" ? "Unassigned" : `Assigned to ${a}`);
+                assignTicket(open.ticketId, a);
+                toast.message(
+                  a === "Unassigned" ? "Unassigned" : `Assigned to ${a}`,
+                );
               }}
             />
           ) : (
@@ -294,14 +356,20 @@ function TicketDetail({
       <div className="px-5 py-4 border-b border-card-border">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] text-muted-foreground tabular-nums">{ticket.id}</div>
-            <h3 className="font-semibold leading-tight truncate">{ticket.subject}</h3>
+            <div className="text-[11px] text-muted-foreground tabular-nums">
+              {ticket.ticketId}
+            </div>
+            <h3 className="font-semibold leading-tight truncate">
+              {ticket.subject}
+            </h3>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <SourceTag s={ticket.source} />
-              <span className="text-[11px] text-muted-foreground">{issueTypeLabels[ticket.issueType]}</span>
-              {ticket.orderRef && (
+              <span className="text-[11px] text-muted-foreground">
+                {issueTypeLabels[ticket.issueType]}
+              </span>
+              {ticket.orderReference && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px]">
-                  <ChevronRight className="size-3" /> {ticket.orderRef}
+                  <ChevronRight className="size-3" /> {ticket.orderReference}
                 </span>
               )}
             </div>
@@ -313,9 +381,18 @@ function TicketDetail({
         </div>
 
         <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
-          <Field label="From"><span className="font-medium text-foreground">{ticket.user.name}</span><div className="text-muted-foreground truncate">{ticket.user.email}</div></Field>
+          <Field label="From">
+            <span className="font-medium text-foreground">
+              {ticket.user.name}
+            </span>
+            <div className="text-muted-foreground truncate">
+              {ticket.user.email}
+            </div>
+          </Field>
           <Field label="Phone">{ticket.user.phone ?? "—"}</Field>
-          <Field label="Created">{new Date(ticket.createdAt).toLocaleString()}</Field>
+          <Field label="Created">
+            {new Date(ticket.createdAt!.toString()).toLocaleString()}
+          </Field>
         </div>
 
         <div className="mt-3 flex items-center gap-2 flex-wrap">
@@ -338,11 +415,11 @@ function TicketDetail({
             ]}
             testId="select-set-priority"
           />
-          {ticket.status !== "resolved" ? (
+          {ticket.status !== "Resolved" ? (
             <Button
               size="sm"
               className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
-              onClick={() => onStatus("resolved")}
+              onClick={() => onStatus("Resolved")}
               data-testid="button-resolve"
             >
               <CheckCircle2 className="size-3.5 mr-1" /> Resolve
@@ -352,18 +429,18 @@ function TicketDetail({
               size="sm"
               variant="outline"
               className="rounded-full"
-              onClick={() => onStatus("open")}
+              onClick={() => onStatus("Open")}
               data-testid="button-reopen"
             >
               Reopen
             </Button>
           )}
-          {ticket.status === "open" && (
+          {ticket.status === "Open" && (
             <Button
               size="sm"
               variant="outline"
               className="rounded-full"
-              onClick={() => onStatus("in_progress")}
+              onClick={() => onStatus("In progress")}
               data-testid="button-progress"
             >
               <Timer className="size-3.5 mr-1" /> In progress
@@ -374,9 +451,12 @@ function TicketDetail({
 
       <div className="px-5 py-4 space-y-3 overflow-y-auto max-h-[460px]">
         {ticket.messages.map((m) => {
-          const mine = m.from === "you";
+          const mine = m.from === "You";
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+            <div
+              key={m.messageId}
+              className={`flex ${mine ? "justify-end" : "justify-start"}`}
+            >
               <div
                 className={[
                   "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm",
@@ -389,15 +469,25 @@ function TicketDetail({
               >
                 <div className="flex items-center gap-1.5 mb-0.5 opacity-80">
                   {m.internal && <Lock className="size-3" />}
-                  <span className="text-[11px] font-medium">{m.authorName ?? (mine ? "You" : "Support")}</span>
-                  <span className="text-[10px] opacity-70">• {fmtTimeAgo(m.at)}</span>
+                  <span className="text-[11px] font-medium">
+                    {m.authorName ?? (mine ? "You" : "Support")}
+                  </span>
+                  <span className="text-[10px] opacity-70">
+                    • {fmtTimeAgo(m.at.toString())}
+                  </span>
                 </div>
-                <div className="whitespace-pre-wrap leading-relaxed">{m.text}</div>
+                <div className="whitespace-pre-wrap leading-relaxed">
+                  {m.text}
+                </div>
                 {m.attachments && m.attachments.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {m.attachments.map((a) => (
-                      <span key={a.name} className="inline-flex items-center gap-1 rounded-md bg-background/20 px-2 py-1 text-[11px]">
-                        <Paperclip className="size-3" /> {a.name} <span className="opacity-70">{a.size}</span>
+                      <span
+                        key={a.name}
+                        className="inline-flex items-center gap-1 rounded-md bg-background/20 px-2 py-1 text-[11px]"
+                      >
+                        <Paperclip className="size-3" /> {a.name}{" "}
+                        <span className="opacity-70">{a.size}</span>
                       </span>
                     ))}
                   </div>
@@ -413,7 +503,9 @@ function TicketDetail({
           {quickReplies.map((qr) => (
             <button
               key={qr.id}
-              onClick={() => setDraft((d) => (d ? `${d}\n\n${qr.text}` : qr.text))}
+              onClick={() =>
+                setDraft((d) => (d ? `${d}\n\n${qr.text}` : qr.text))
+              }
               className="text-[11px] rounded-full bg-secondary px-2.5 py-1 hover-elevate active-elevate-2"
               data-testid={`quick-reply-${qr.id}`}
             >
@@ -423,7 +515,11 @@ function TicketDetail({
         </div>
         <div className="flex items-end gap-2">
           <Textarea
-            placeholder={internal ? "Internal note (only your team will see this)…" : "Reply to the customer…"}
+            placeholder={
+              internal
+                ? "Internal note (only your team will see this)…"
+                : "Reply to the customer…"
+            }
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             className="min-h-[64px]"
@@ -454,7 +550,11 @@ function TicketDetail({
           </Button>
         </div>
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Switch checked={internal} onCheckedChange={setInternal} data-testid="switch-internal" />
+          <Switch
+            checked={internal}
+            onCheckedChange={setInternal}
+            data-testid="switch-internal"
+          />
           Internal note
         </label>
       </div>
@@ -462,12 +562,23 @@ function TicketDetail({
   );
 }
 
-function CreateDialog({ onCreate }: { onCreate: (input: { subject: string; priority: TicketPriority; source: TicketSource; issueType: TicketIssueType; message: string; orderRef?: string }) => void }) {
+function CreateDialog({
+  onCreate,
+}: {
+  onCreate: (input: {
+    subject: string;
+    priority: TicketPriority;
+    source: TicketSource;
+    issueType: TicketIssueType;
+    message: string;
+    orderRef?: string;
+  }) => void;
+}) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [priority, setPriority] = useState<TicketPriority>("medium");
-  const [source, setSource] = useState<TicketSource>("restaurant");
-  const [issueType, setIssueType] = useState<TicketIssueType>("technical");
+  const [priority, setPriority] = useState<TicketPriority>("Medium");
+  const [source, setSource] = useState<TicketSource>("Restaurant");
+  const [issueType, setIssueType] = useState<TicketIssueType>("Technical");
   const [orderRef, setOrderRef] = useState("");
 
   return (
@@ -478,7 +589,11 @@ function CreateDialog({ onCreate }: { onCreate: (input: { subject: string; prior
       <div className="space-y-3">
         <div className="space-y-1.5">
           <Label>Subject</Label>
-          <Input value={subject} onChange={(e) => setSubject(e.target.value)} data-testid="input-subject" />
+          <Input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            data-testid="input-subject"
+          />
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
@@ -503,7 +618,9 @@ function CreateDialog({ onCreate }: { onCreate: (input: { subject: string; prior
               data-testid="select-issue-type"
             >
               {Object.entries(issueTypeLabels).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
+                <option key={k} value={k}>
+                  {v}
+                </option>
               ))}
             </select>
           </div>
@@ -524,11 +641,21 @@ function CreateDialog({ onCreate }: { onCreate: (input: { subject: string; prior
         </div>
         <div className="space-y-1.5">
           <Label>Order reference (optional)</Label>
-          <Input placeholder="INV_…" value={orderRef} onChange={(e) => setOrderRef(e.target.value)} data-testid="input-order-ref" />
+          <Input
+            placeholder="INV_…"
+            value={orderRef}
+            onChange={(e) => setOrderRef(e.target.value)}
+            data-testid="input-order-ref"
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Message</Label>
-          <Textarea value={message} onChange={(e) => setMessage(e.target.value)} className="min-h-[100px]" data-testid="input-message" />
+          <Textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="min-h-[100px]"
+            data-testid="input-message"
+          />
         </div>
       </div>
       <DialogFooter>
@@ -536,7 +663,14 @@ function CreateDialog({ onCreate }: { onCreate: (input: { subject: string; prior
           className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
           onClick={() => {
             if (!subject || !message) return;
-            onCreate({ subject, priority, source, issueType, message, orderRef: orderRef || undefined });
+            onCreate({
+              subject,
+              priority,
+              source,
+              issueType,
+              message,
+              orderRef: orderRef || undefined,
+            });
           }}
           data-testid="button-submit-ticket"
         >
@@ -570,17 +704,27 @@ function FilterSelect<T extends string>({
         data-testid={testId}
       >
         {options.map((o) => (
-          <option key={o.v} value={o.v}>{o.l}</option>
+          <option key={o.v} value={o.v}>
+            {o.l}
+          </option>
         ))}
       </select>
     </label>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-md bg-secondary px-2.5 py-1.5">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
       <div className="text-xs mt-0.5 truncate">{children}</div>
     </div>
   );
@@ -588,23 +732,44 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function PriorityTag({ p }: { p: TicketPriority }) {
   const map: Record<TicketPriority, string> = {
-    urgent: "bg-destructive/15 text-destructive",
-    high: "bg-primary/15 text-primary",
-    medium: "bg-secondary text-foreground",
-    low: "bg-secondary text-muted-foreground",
+    Urgent: "bg-destructive/15 text-destructive",
+    High: "bg-primary/15 text-primary",
+    Medium: "bg-secondary text-foreground",
+    Low: "bg-secondary text-muted-foreground",
   };
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${map[p]}`}>{p}</span>;
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${map[p]}`}
+    >
+      {p}
+    </span>
+  );
 }
 
 function StatusTag({ s }: { s: TicketStatus }) {
-  const map: Record<TicketStatus, { label: string; cls: string; dot: string }> = {
-    open: { label: "Open", cls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-    in_progress: { label: "In progress", cls: "bg-amber-500/10 text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-    resolved: { label: "Resolved", cls: "bg-secondary text-muted-foreground", dot: "bg-muted-foreground" },
-  };
+  const map: Record<TicketStatus, { label: string; cls: string; dot: string }> =
+    {
+      Open: {
+        label: "Open",
+        cls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+        dot: "bg-emerald-500",
+      },
+      "In progress": {
+        label: "In progress",
+        cls: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+        dot: "bg-amber-500",
+      },
+      Resolved: {
+        label: "Resolved",
+        cls: "bg-secondary text-muted-foreground",
+        dot: "bg-muted-foreground",
+      },
+    };
   const m = map[s];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${m.cls}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${m.cls}`}
+    >
       <span className={`size-1.5 rounded-full ${m.dot}`} /> {m.label}
     </span>
   );

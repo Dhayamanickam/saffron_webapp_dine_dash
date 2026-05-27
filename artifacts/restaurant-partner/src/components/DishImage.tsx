@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ImageIcon } from "lucide-react";
 import { dishImageMap, fallbackDish } from "@/lib/dishImages";
 
@@ -10,10 +10,23 @@ type Props = {
   rounded?: string;
 };
 
-export function DishImage({ itemId, src, name, className = "", rounded = "rounded-xl" }: Props) {
-  const initial = src ?? (itemId ? dishImageMap[itemId] : undefined) ?? fallbackDish;
-  const [resolved, setResolved] = useState(initial);
+export function DishImage({
+  itemId,
+  src,
+  name,
+  className = "",
+  rounded = "rounded-xl",
+}: Props) {
+  const activeImageSource =
+    src ?? (itemId ? dishImageMap[itemId] : undefined) ?? fallbackDish;
+
+  const [displaySrc, setDisplaySrc] = useState(activeImageSource);
   const [errored, setErrored] = useState(false);
+
+  useEffect(() => {
+    setDisplaySrc(activeImageSource);
+    setErrored(false);
+  }, [src, itemId]);
 
   return (
     <div
@@ -21,14 +34,14 @@ export function DishImage({ itemId, src, name, className = "", rounded = "rounde
       aria-label={name}
     >
       <img
-        src={resolved}
+        src={displaySrc}
         alt={name}
         loading="lazy"
         className="h-full w-full object-cover"
         onError={() => {
           if (!errored) {
             setErrored(true);
-            setResolved(fallbackDish);
+            setDisplaySrc(fallbackDish);
           }
         }}
       />

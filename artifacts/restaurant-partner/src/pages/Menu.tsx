@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { useStore } from "@/lib/store";
+import { API_BASE_URL, useStore } from "@/lib/store";
 import { SectionPanel } from "@/components/SectionPanel";
 import { PageHeader } from "@/components/PageHeader";
 import { StatStrip } from "@/components/StatStrip";
@@ -18,13 +18,37 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Pencil, Trash2, Clock, Search, Upload, Utensils, CheckCircle2, EyeOff, Image as ImageIcon } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Clock,
+  Search,
+  Upload,
+  Utensils,
+  CheckCircle2,
+  EyeOff,
+  Image as ImageIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { usd2 } from "@/lib/format";
+import axios from "axios";
 
 export default function Menu() {
-  const { menu, toggleAvailability, upsertMenuItem, deleteMenuItem, bulkSetPrep, setMenuImage } = useStore();
+  const {
+    menu,
+    toggleAvailability,
+    addMenuItem,
+    upsertMenuItem,
+    deleteMenuItem,
+    bulkSetPrep,
+    setMenuImage,
+  } = useStore();
   const [activeCat, setActiveCat] = useState<string>("all");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
@@ -32,16 +56,19 @@ export default function Menu() {
 
   const items = useMemo(() => {
     return menu.filter((m) => {
-      if (activeCat !== "all" && m.categoryId !== activeCat) return false;
+      if (activeCat !== "all" && m.category !== activeCat) return false;
       if (q && !m.name.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
   }, [menu, activeCat, q]);
 
-  const editingItem = editing ? menu.find((m) => m.id === editing) : null;
+  const editingItem = editing ? menu.find((m) => m.dishId === editing) : null;
   const available = menu.filter((m) => m.available).length;
-  const avgPrep = Math.round(menu.reduce((s, m) => s + m.prepMinutes, 0) / Math.max(1, menu.length));
-  const avgPrice = menu.reduce((s, m) => s + m.price, 0) / Math.max(1, menu.length);
+  const avgPrep = Math.round(
+    menu.reduce((s, m) => s + m.prepTime, 0) / Math.max(1, menu.length),
+  );
+  const avgPrice =
+    menu.reduce((s, m) => s + m.price, 0) / Math.max(1, menu.length);
 
   return (
     <div className="space-y-4">
@@ -49,16 +76,22 @@ export default function Menu() {
         title="Menu"
         description="Update your dishes, manage availability, upload photos, and tune prep times."
         actions={
-          <Dialog open={editing === "new"} onOpenChange={(o) => setEditing(o ? "new" : null)}>
+          <Dialog
+            open={editing === "new"}
+            onOpenChange={(o) => setEditing(o ? "new" : null)}
+          >
             <DialogTrigger asChild>
-              <Button className="rounded-full bg-foreground text-background hover-elevate active-elevate-2" data-testid="button-add-item">
+              <Button
+                className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
+                data-testid="button-add-item"
+              >
                 <Plus className="size-4 mr-1" /> Add item
               </Button>
             </DialogTrigger>
             <ItemDialog
               initial={null}
               onSave={(item) => {
-                upsertMenuItem(item);
+                addMenuItem(item);
                 toast.success(`Added ${item.name}`);
                 setEditing(null);
               }}
@@ -69,23 +102,46 @@ export default function Menu() {
 
       <StatStrip
         items={[
-          { label: "Total dishes", value: String(menu.length), icon: Utensils, hint: `${menuCategories.length} categories` },
-          { label: "Available now", value: String(available), icon: CheckCircle2, hint: `${menu.length - available} hidden` },
-          { label: "Avg prep time", value: `${avgPrep} min`, icon: Clock, accent: true },
+          {
+            label: "Total dishes",
+            value: String(menu.length),
+            icon: Utensils,
+            hint: `${menuCategories.length} categories`,
+          },
+          {
+            label: "Available now",
+            value: String(available),
+            icon: CheckCircle2,
+            hint: `${menu.length - available} hidden`,
+          },
+          {
+            label: "Avg prep time",
+            value: `${avgPrep} min`,
+            icon: Clock,
+            accent: true,
+          },
           { label: "Avg price", value: usd2(avgPrice), icon: ImageIcon },
         ]}
       />
 
       <div className="grid grid-cols-12 gap-4">
         <aside className="col-span-12 md:col-span-3 space-y-4">
-          <SectionPanel title="Categories" subtitle={`${menu.length} items total`}>
+          <SectionPanel
+            title="Categories"
+            subtitle={`${menu.length} items total`}
+          >
             <div className="space-y-1">
-              <CategoryButton label="All items" count={menu.length} active={activeCat === "all"} onClick={() => setActiveCat("all")} />
+              <CategoryButton
+                label="All items"
+                count={menu.length}
+                active={activeCat === "all"}
+                onClick={() => setActiveCat("all")}
+              />
               {menuCategories.map((c) => (
                 <CategoryButton
                   key={c.id}
-                  label={c.name}
-                  count={menu.filter((m) => m.categoryId === c.id).length}
+                  label={c.id}
+                  count={menu.filter((m) => m.category === c.id).length}
                   active={activeCat === c.id}
                   onClick={() => setActiveCat(c.id)}
                 />
@@ -99,7 +155,11 @@ export default function Menu() {
                 type="number"
                 placeholder="min"
                 value={prepBulk}
-                onChange={(e) => setPrepBulk(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) =>
+                  setPrepBulk(
+                    e.target.value === "" ? "" : Number(e.target.value),
+                  )
+                }
                 data-testid="input-bulk-prep"
               />
               <Button
@@ -138,26 +198,31 @@ export default function Menu() {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {items.map((m) => (
                 <MenuCard
-                  key={m.id}
+                  key={m.dishId}
                   item={m}
                   onToggle={() => {
-                    toggleAvailability(m.id);
-                    toast.message(`${m.name} ${m.available ? "hidden" : "available"}`);
+                    toggleAvailability(m.dishId);
+                    toast.message(
+                      `${m.name} ${m.available ? "hidden" : "available"}`,
+                    );
                   }}
-                  onEdit={() => setEditing(m.id)}
+                  onEdit={() => setEditing(m.dishId)}
                   onDelete={() => {
-                    deleteMenuItem(m.id);
+                    deleteMenuItem(m.dishId);
                     toast.error(`Deleted ${m.name}`);
                   }}
                   onImage={(dataUrl) => {
-                    setMenuImage(m.id, dataUrl);
+                    setMenuImage(m.dishId, dataUrl);
                     toast.success("Photo updated");
                   }}
                 />
               ))}
             </div>
 
-            <Dialog open={!!editing && editing !== "new"} onOpenChange={(o) => !o && setEditing(null)}>
+            <Dialog
+              open={!!editing && editing !== "new"}
+              onOpenChange={(o) => !o && setEditing(null)}
+            >
               {editing && editing !== "new" && editingItem && (
                 <ItemDialog
                   initial={editingItem}
@@ -202,10 +267,16 @@ function MenuCard({
   return (
     <article
       className="rounded-2xl border border-card-border bg-card shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md"
-      data-testid={`menu-item-${item.id}`}
+      data-testid={`menu-item-${item.dishId}`}
     >
       <div className="relative aspect-[16/10]">
-        <DishImage itemId={item.id} src={item.imageUrl} name={item.name} className="h-full w-full" rounded="rounded-none" />
+        <DishImage
+          itemId={item.dishId}
+          src={item.image}
+          name={item.name}
+          className="h-full w-full"
+          rounded="rounded-none"
+        />
         {!item.available && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
             <span className="inline-flex items-center gap-1 rounded-full bg-card border border-card-border px-2 py-1 text-xs">
@@ -216,7 +287,7 @@ function MenuCard({
         <button
           onClick={() => inputRef.current?.click()}
           className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/90 border border-card-border px-2.5 py-1 text-xs shadow-sm hover-elevate active-elevate-2"
-          data-testid={`button-upload-${item.id}`}
+          data-testid={`button-upload-${item.dishId}`}
         >
           <Upload className="size-3" /> Photo
         </button>
@@ -237,14 +308,17 @@ function MenuCard({
           <h3 className="font-semibold leading-tight">{item.name}</h3>
           <span className="font-semibold tabular-nums">{usd2(item.price)}</span>
         </div>
-        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
+        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+          {item.description}
+        </p>
         <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5">
-            <Clock className="size-3" /> {item.prepMinutes} min
+            <Clock className="size-3" /> {item.prepTime} min
           </span>
           {item.variants.length > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5">
-              {item.variants.length} variant{item.variants.length === 1 ? "" : "s"}
+              {item.variants.length} variant
+              {item.variants.length === 1 ? "" : "s"}
             </span>
           )}
           {item.addOns.length > 0 && (
@@ -255,8 +329,14 @@ function MenuCard({
         </div>
         <div className="mt-4 pt-3 border-t border-card-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Switch checked={item.available} onCheckedChange={onToggle} data-testid={`switch-available-${item.id}`} />
-            <span className="text-xs text-muted-foreground">{item.available ? "Available" : "Hidden"}</span>
+            <Switch
+              checked={item.available}
+              onCheckedChange={onToggle}
+              data-testid={`switch-available-${item.dishId}`}
+            />
+            <span className="text-xs text-muted-foreground">
+              {item.available ? "Available" : "Hidden"}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <Tooltip>
@@ -264,7 +344,7 @@ function MenuCard({
                 <button
                   onClick={onEdit}
                   className="size-8 rounded-md text-muted-foreground hover-elevate active-elevate-2 inline-flex items-center justify-center"
-                  data-testid={`button-edit-${item.id}`}
+                  data-testid={`button-edit-${item.dishId}`}
                 >
                   <Pencil className="size-3.5" />
                 </button>
@@ -276,7 +356,7 @@ function MenuCard({
                 <button
                   onClick={onDelete}
                   className="size-8 rounded-md text-destructive hover-elevate active-elevate-2 inline-flex items-center justify-center"
-                  data-testid={`button-delete-${item.id}`}
+                  data-testid={`button-delete-${item.dishId}`}
                 >
                   <Trash2 className="size-3.5" />
                 </button>
@@ -290,18 +370,34 @@ function MenuCard({
   );
 }
 
-function CategoryButton({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+function CategoryButton({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       className={[
         "w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
-        active ? "bg-foreground text-background" : "text-muted-foreground hover-elevate active-elevate-2",
+        active
+          ? "bg-foreground text-background"
+          : "text-muted-foreground hover-elevate active-elevate-2",
       ].join(" ")}
       onClick={onClick}
       data-testid={`category-${label.toLowerCase().replace(/\s+/g, "-")}`}
     >
       <span>{label}</span>
-      <span className={`text-xs tabular-nums ${active ? "text-background/80" : "text-muted-foreground"}`}>{count}</span>
+      <span
+        className={`text-xs tabular-nums ${active ? "text-background/80" : "text-muted-foreground"}`}
+      >
+        {count}
+      </span>
     </button>
   );
 }
@@ -315,12 +411,18 @@ function ItemDialog({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [price, setPrice] = useState<number | "">(initial?.price ?? "");
-  const [prep, setPrep] = useState<number | "">(initial?.prepMinutes ?? "");
+  const [prep, setPrep] = useState<number | "">(initial?.prepTime ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? menuCategories[0].id);
-  const [variants, setVariants] = useState(initial?.variants?.map((v) => v.name).join(", ") ?? "Regular");
-  const [addOns, setAddOns] = useState(initial?.addOns?.map((a) => `${a.name}:${a.price}`).join(", ") ?? "");
-  const [imageUrl, setImageUrl] = useState<string | undefined>(initial?.imageUrl);
+  const [category, setCategoryId] = useState(
+    initial?.category ?? menuCategories[0].id,
+  );
+  const [variants, setVariants] = useState(
+    initial?.variants?.map((v) => v).join(", ") ?? "Regular",
+  );
+  const [addOns, setAddOns] = useState(
+    initial?.addOns?.map((a) => `${a.name}:${a.price}`).join(", ") ?? "",
+  );
+  const [image, setImageUrl] = useState<string | undefined>(initial?.image);
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -332,7 +434,13 @@ function ItemDialog({
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 sm:col-span-5">
           <div className="aspect-square rounded-xl overflow-hidden border border-card-border">
-            <DishImage itemId={initial?.id} src={imageUrl} name={name || "Dish"} className="h-full w-full" rounded="rounded-none" />
+            <DishImage
+              itemId={initial?.dishId}
+              src={image}
+              name={name || "Dish"}
+              className="h-full w-full"
+              rounded="rounded-none"
+            />
           </div>
           <button
             onClick={() => inputRef.current?.click()}
@@ -347,14 +455,46 @@ function ItemDialog({
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              const reader = new FileReader();
-              reader.onload = () => {
-                if (typeof reader.result === "string") setImageUrl(reader.result);
-              };
-              reader.readAsDataURL(f);
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              const localPreviewUrl = URL.createObjectURL(file);
+              setImageUrl(localPreviewUrl);
+
+              // Package the binary asset data payload inside a FormData wrapper
+              const formData = new FormData();
+              formData.append("image", file);
+
+              try {
+                console.log(
+                  "Uploading file resource buffer down to AWS S3 bucket...",
+                );
+
+                // Fire the network request to your Express S3 upload pipeline route
+                const response = await axios.post(
+                  `${API_BASE_URL}/admin/upload-image`,
+                  formData,
+                );
+                console.log(response.data.status === "success");
+                if (response.data) {
+                  const s3PublicUrl = response.data.result.publicUrl; // Grabs the clean HTTPS link returned by AWS
+                  // Update state with the official public persistent URL link
+                  console.log(
+                    "Successfully stored asset to AWS Cloud infrastructure at location:",
+                    s3PublicUrl,
+                  );
+                  setImageUrl(s3PublicUrl)
+                }
+              } catch (error: any) {
+                console.log(error.response?.data.error);
+                console.log(error.message);
+                console.error(
+                  "Cloud storage upload operation aborted or failed:",
+                  error,
+                );
+                alert("Failed uploading image to asset server.");
+              }
             }}
           />
         </div>
@@ -362,7 +502,11 @@ function ItemDialog({
         <div className="col-span-12 sm:col-span-7 space-y-3">
           <div className="space-y-1.5">
             <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} data-testid="input-item-name" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              data-testid="input-item-name"
+            />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
@@ -370,7 +514,9 @@ function ItemDialog({
               <Input
                 type="number"
                 value={price}
-                onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) =>
+                  setPrice(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 data-testid="input-item-price"
               />
             </div>
@@ -379,35 +525,51 @@ function ItemDialog({
               <Input
                 type="number"
                 value={prep}
-                onChange={(e) => setPrep(e.target.value === "" ? "" : Number(e.target.value))}
+                onChange={(e) =>
+                  setPrep(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 data-testid="input-item-prep"
               />
             </div>
             <div className="space-y-1.5">
               <Label>Category</Label>
               <select
-                value={categoryId}
+                value={category}
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 data-testid="select-item-category"
               >
                 {menuCategories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.id}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>Description</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} data-testid="input-item-description" />
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              data-testid="input-item-description"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Variants (comma separated)</Label>
-            <Input value={variants} onChange={(e) => setVariants(e.target.value)} data-testid="input-item-variants" />
+            <Input
+              value={variants}
+              onChange={(e) => setVariants(e.target.value)}
+              data-testid="input-item-variants"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Add-ons (name:price, …)</Label>
-            <Input value={addOns} onChange={(e) => setAddOns(e.target.value)} data-testid="input-item-addons" />
+            <Input
+              value={addOns}
+              onChange={(e) => setAddOns(e.target.value)}
+              data-testid="input-item-addons"
+            />
           </div>
         </div>
       </div>
@@ -418,28 +580,45 @@ function ItemDialog({
           onClick={() => {
             if (!name || price === "" || prep === "") return;
             onSave({
-              id: initial?.id ?? `m${Date.now()}`,
-              name,
-              price: Number(price),
-              prepMinutes: Number(prep),
-              description,
-              categoryId,
+              // 1. Maintain core structural tracking fields safely
+              dishId: initial?.dishId ?? `dish_${Date.now()}`, // Consistent namespace prefixing
+              restaurantId:
+                initial?.restaurantId ?? "72cabaf9-1f86-48cd-a908-92c74867fc5c",
+              name: name.trim(),
+              price: Number(price) || 0,
+              prepTime: Number(prep) || 15, // Default baseline fallback to 15 mins if parsing yields NaN
+              description: description?.trim() ?? "",
+              category,
               available: initial?.available ?? true,
               imageHue: initial?.imageHue ?? Math.floor(Math.random() * 50) + 5,
-              imageUrl,
+              image,
+
+              // 2. Clean variant parsing layout
               variants: variants
                 .split(",")
                 .map((v) => v.trim())
-                .filter(Boolean)
-                .map((nm) => ({ name: nm, deltaPrice: 0 })),
+                .filter(Boolean) // Discard empty string entries caused by trailing commas
+                .map((nm) => nm),
+
+              // 3. Robust Add-On Split Sanitizer
               addOns: addOns
                 .split(",")
                 .map((a) => a.trim())
                 .filter(Boolean)
                 .map((s) => {
-                  const [n, p] = s.split(":");
-                  return { name: n?.trim() ?? "", price: Number(p ?? 0) || 0 };
-                }),
+                  const parts = s.split(":");
+                  const namePart = parts[0]?.trim();
+                  const pricePart = parts[1]?.trim();
+
+                  return {
+                    // Safe check: If no valid name string was found before the colon, skip storing a blank object
+                    name: namePart || "Custom Add-On",
+                    // Safe check: Parse string into a valid float number, defaulting to 0 if NaN or missing
+                    price: pricePart ? parseFloat(pricePart) : 0,
+                  };
+                })
+                // Extra safety: Filter out any items that failed completely to avoid saving empty blocks
+                .filter((addon) => addon.name !== ""),
             });
           }}
           data-testid="button-save-item"

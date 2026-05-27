@@ -26,12 +26,12 @@ export default function Offers() {
   const [open, setOpen] = useState(false);
 
   const active = offers.filter((o) => o.active).length;
-  const expired = offers.filter((o) => new Date(o.endsAt).getTime() < Date.now()).length;
+  const expired = offers.filter((o) => new Date(o.endDate).getTime() < Date.now()).length;
   const avgValue =
     offers.length === 0
       ? "—"
       : (() => {
-          const pcts = offers.filter((o) => o.type === "percent");
+          const pcts = offers.filter((o) => o.type === "Percent");
           if (pcts.length === 0) return "—";
           return `${Math.round(pcts.reduce((s, o) => s + o.value, 0) / pcts.length)}% avg`;
         })();
@@ -51,7 +51,7 @@ export default function Offers() {
             <NewOfferDialog
               onSave={(o) => {
                 upsertOffer(o);
-                toast.success(`Created ${o.code}`);
+                toast.success(`Created ${o.promoCode}`);
                 setOpen(false);
               }}
             />
@@ -92,18 +92,18 @@ export default function Offers() {
               <tbody>
                 {offers.map((o) => (
                   <tr
-                    key={o.id}
+                    key={o.offerId}
                     className="border-b border-card-border/60 last:border-b-0 hover:bg-secondary/40 transition-colors"
-                    data-testid={`row-offer-${o.id}`}
+                    data-testid={`row-offer-${o.offerId}`}
                   >
-                    <td className="py-3.5 pl-5 pr-3 font-medium tracking-wide">{o.code}</td>
-                    <td className="py-3.5 px-3 text-muted-foreground">{o.type === "percent" ? "Percent" : "Flat"}</td>
+                    <td className="py-3.5 pl-5 pr-3 font-medium tracking-wide">{o.promoCode}</td>
+                    <td className="py-3.5 px-3 text-muted-foreground">{o.type === "Percent" ? "Percent" : "Flat"}</td>
                     <td className="py-3.5 px-3 text-right font-medium tabular-nums">
-                      {o.type === "percent" ? `${o.value}%` : usd2(o.value)}
+                      {o.type === "Percent" ? `${o.value}%` : usd2(o.value)}
                     </td>
-                    <td className="py-3.5 px-3 text-right tabular-nums">{usd2(o.minOrder)}</td>
+                    <td className="py-3.5 px-3 text-right tabular-nums">{usd2(o.minimumOrder)}</td>
                     <td className="py-3.5 px-3 text-muted-foreground">
-                      {dateOnly(o.startsAt)} → {dateOnly(o.endsAt)}
+                      {dateOnly(o.startDate.toString())} → {dateOnly(o.endDate.toString())}
                     </td>
                     <td className="py-3.5 px-3">
                       <StatusPill status={o.active ? "active" : "inactive"} />
@@ -114,10 +114,10 @@ export default function Offers() {
                           <button
                             className="size-7 rounded-md text-destructive hover-elevate active-elevate-2 inline-flex items-center justify-center"
                             onClick={() => {
-                              deleteOffer(o.id);
-                              toast.error(`Deleted ${o.code}`);
+                              deleteOffer(o.offerId);
+                              toast.error(`Deleted ${o.promoCode}`);
                             }}
-                            data-testid={`button-delete-offer-${o.id}`}
+                            data-testid={`button-delete-offer-${o.offerId}`}
                           >
                             <Trash2 className="size-3.5" />
                           </button>
@@ -138,7 +138,8 @@ export default function Offers() {
 
 function NewOfferDialog({ onSave }: { onSave: (o: import("@/lib/mockData").Offer) => void }) {
   const [code, setCode] = useState("");
-  const [type, setType] = useState<"percent" | "flat">("percent");
+  const [name, setName] = useState("");
+  const [type, setType] = useState<"Percent" | "Flat Amount">("Percent");
   const [value, setValue] = useState<number | "">(10);
   const [minOrder, setMinOrder] = useState<number | "">(0);
   const today = new Date().toISOString().slice(0, 10);
@@ -156,21 +157,25 @@ function NewOfferDialog({ onSave }: { onSave: (o: import("@/lib/mockData").Offer
           <Label>Promo code</Label>
           <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="WEEKEND15" data-testid="input-offer-code" />
         </div>
+        <div className="space-y-1.5">
+          <Label>Name</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="NAME" data-testid="input-offer-code" />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label>Type</Label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as "percent" | "flat")}
+              onChange={(e) => setType(e.target.value as "Percent" | "Flat Amount")}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               data-testid="select-offer-type"
             >
-              <option value="percent">Percent</option>
-              <option value="flat">Flat amount</option>
+              <option value="Percent">Percent</option>
+              <option value="Flat Amount">Flat amount</option>
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label>{type === "percent" ? "Percent off" : "Amount off"}</Label>
+            <Label>{type === "Percent" ? "Percent off" : "Amount off"}</Label>
             <Input
               type="number"
               value={value}
@@ -205,13 +210,16 @@ function NewOfferDialog({ onSave }: { onSave: (o: import("@/lib/mockData").Offer
           onClick={() => {
             if (!code || value === "") return;
             onSave({
-              id: `o${Date.now()}`,
-              code,
+              offerId: `o${Date.now()}`,
+              promoCode: code,
+              name,
+              description: name || code,
+              restaurantId: "",
               type,
               value: Number(value),
-              minOrder: Number(minOrder || 0),
-              startsAt: new Date(start).toISOString(),
-              endsAt: new Date(end).toISOString(),
+              minimumOrder: Number(minOrder || 0),
+              startDate: new Date(start),
+              endDate: new Date(end),
               active: true,
             });
           }}

@@ -30,22 +30,31 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { popularItems, revenueByDay, restaurantProfile, menuItems } from "@/lib/mockData";
 import { usd, dateShort, minutesAgoLabel } from "@/lib/format";
 import { motion } from "framer-motion";
 
 const activityIcons = [Hotel, Plane, ShoppingCart, FileCode, Receipt];
 
 export default function Dashboard() {
-  const { orders, flashDeals } = useStore();
+  const {
+    orders,
+    flashDeals,
+    menu,
+    restaurantProfile,
+    popularItems,
+    revenueByDay,
+  } = useStore();
 
   const stats = useMemo(() => {
     const today = orders;
     const totalRevenue = today.reduce((s, o) => s + o.total, 0);
-    const active = today.filter((o) => o.status === "new" || o.status === "preparing" || o.status === "ready").length;
+    const active = today.filter(
+      (o) =>
+        o.status === "New" || o.status === "Preparing" || o.status === "Ready",
+    ).length;
     const flashRevenue = flashDeals.reduce((s, d) => {
-      const item = menuItems.find((m) => m.id === d.itemId);
-      const unit = item ? item.price * (1 - d.discountPct / 100) : 0;
+      const item = menu.find((m) => m.dishId === d.dish);
+      const unit = item ? item.price * (1 - d.discount / 100) : 0;
       return s + unit * d.sold;
     }, 0);
     return {
@@ -64,9 +73,12 @@ export default function Dashboard() {
         transition={{ duration: 0.3 }}
         className="rounded-2xl bg-card border border-card-border shadow-sm px-6 py-6"
       >
-        <h1 className="text-3xl font-semibold tracking-tight">Good morning, {restaurantProfile.ownerName.split(" ")[0]}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Good morning, {restaurantProfile!.ownerName.split(" ")[0]}
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Stay on top of incoming orders, monitor prep times, and keep the kitchen flowing.
+          Stay on top of incoming orders, monitor prep times, and keep the
+          kitchen flowing.
         </p>
       </motion.div>
 
@@ -74,20 +86,29 @@ export default function Dashboard() {
         <div className="col-span-12 lg:col-span-4 space-y-4">
           <SectionPanel
             title="Today at a glance"
-            subtitle={`${restaurantProfile.cuisine} · ${dateShort(new Date().toISOString()).split(",")[0]}`}
+            subtitle={`${restaurantProfile!.cuisine} · ${dateShort(new Date().toISOString()).split(",")[0]}`}
           >
             <div className="grid grid-cols-2 gap-3">
               <Mini label="Today's Orders" value={String(stats.totalOrders)} />
               <Mini label="Revenue" value={usd(stats.totalRevenue)} />
               <Mini label="Active" value={String(stats.active)} accent />
-              <Mini label="Avg ticket" value={usd(stats.totalRevenue / Math.max(1, stats.totalOrders))} />
+              <Mini
+                label="Avg ticket"
+                value={usd(stats.totalRevenue / Math.max(1, stats.totalOrders))}
+              />
             </div>
 
             <div className="mt-4 flex gap-2">
-              <button className="flex-1 rounded-full bg-foreground text-background text-sm py-2.5 font-medium hover-elevate active-elevate-2" data-testid="button-payouts">
+              <button
+                className="flex-1 rounded-full bg-foreground text-background text-sm py-2.5 font-medium hover-elevate active-elevate-2"
+                data-testid="button-payouts"
+              >
                 Payouts
               </button>
-              <button className="flex-1 rounded-full bg-secondary text-foreground text-sm py-2.5 font-medium hover-elevate active-elevate-2" data-testid="button-export">
+              <button
+                className="flex-1 rounded-full bg-secondary text-foreground text-sm py-2.5 font-medium hover-elevate active-elevate-2"
+                data-testid="button-export"
+              >
                 Export
               </button>
             </div>
@@ -97,17 +118,23 @@ export default function Dashboard() {
             <div className="space-y-3">
               {popularItems.map((p, i) => (
                 <div key={p.name} className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
+                  <span className="text-xs text-muted-foreground w-4">
+                    {i + 1}
+                  </span>
                   <div className="flex-1">
                     <div className="text-sm font-medium">{p.name}</div>
                     <div className="mt-1 h-1.5 bg-secondary rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary rounded-full"
-                        style={{ width: `${(p.orders / popularItems[0].orders) * 100}%` }}
+                        style={{
+                          width: `${(p.orders / popularItems[0].orders) * 100}%`,
+                        }}
                       />
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">{p.orders}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {p.orders}
+                  </span>
                 </div>
               ))}
             </div>
@@ -156,27 +183,28 @@ export default function Dashboard() {
               }
             >
               <div className="grid grid-cols-2 gap-3">
-                <FlashCard
-                  title="Paneer Tikka"
-                  value="25%"
-                  caption="60 min · 18 / 30 sold"
-                  hue={28}
-                  variant="dark"
-                />
-                <FlashCard
-                  title="Truffle Naan"
-                  value="15%"
-                  caption="45 min · 12 / 50 sold"
-                  hue={42}
-                  variant="primary"
-                />
+                {flashDeals.map((deal) => {
+                  const item = menu.find((m) => m.dishId === deal.dish);
+                  return (
+                    <FlashCard
+                      title={item!.name}
+                      value={deal.discount.toString()}
+                      caption={deal.duration.toString()+' min'}
+                      hue={28}
+                      variant="dark"
+                    />
+                  );
+                })}
               </div>
             </SectionPanel>
           </div>
         </div>
 
         <div className="col-span-12 lg:col-span-4">
-          <SectionPanel title="Total Income" subtitle="Revenue across the past week">
+          <SectionPanel
+            title="Total Income"
+            subtitle="Revenue across the past week"
+          >
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2 rounded-sm bg-primary" /> Revenue
@@ -188,15 +216,48 @@ export default function Dashboard() {
             <div className="h-[230px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueByDay} barGap={4}>
-                  <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 3" />
-                  <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={32} />
+                  <CartesianGrid
+                    vertical={false}
+                    stroke="hsl(var(--border))"
+                    strokeDasharray="3 3"
+                  />
+                  <XAxis
+                    dataKey="day"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{
+                      fontSize: 11,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{
+                      fontSize: 11,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                    width={32}
+                  />
                   <RTooltip
                     cursor={{ fill: "hsl(var(--secondary))" }}
-                    contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 12 }}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid hsl(var(--border))",
+                      background: "hsl(var(--card))",
+                      fontSize: 12,
+                    }}
                   />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="orders" fill="hsl(var(--foreground))" radius={[6, 6, 0, 0]} />
+                  <Bar
+                    dataKey="revenue"
+                    fill="hsl(var(--primary))"
+                    radius={[6, 6, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="orders"
+                    fill="hsl(var(--foreground))"
+                    radius={[6, 6, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -216,7 +277,10 @@ export default function Dashboard() {
                 data-testid="input-search-activities"
               />
             </div>
-            <button className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm hover-elevate active-elevate-2" data-testid="button-filter">
+            <button
+              className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-sm hover-elevate active-elevate-2"
+              data-testid="button-filter"
+            >
               <ListFilter className="size-3.5" /> Filter
             </button>
           </div>
@@ -227,7 +291,9 @@ export default function Dashboard() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-muted-foreground border-b border-card-border">
-                <th className="text-left font-normal py-3 pl-5 pr-3">Order ID</th>
+                <th className="text-left font-normal py-3 pl-5 pr-3">
+                  Order ID
+                </th>
                 <th className="text-left font-normal py-3 px-3">Customer</th>
                 <th className="text-left font-normal py-3 px-3">Items</th>
                 <th className="text-right font-normal py-3 px-3">Total</th>
@@ -241,33 +307,44 @@ export default function Dashboard() {
                 const Icon = activityIcons[i % activityIcons.length];
                 return (
                   <tr
-                    key={o.id}
+                    key={o.orderId}
                     className="border-b border-card-border/60 last:border-b-0 hover:bg-secondary/40 transition-colors"
-                    data-testid={`row-activity-${o.id}`}
+                    data-testid={`row-activity-${o.orderId}`}
                   >
-                    <td className="py-3.5 pl-5 pr-3 font-medium text-foreground">{o.id}</td>
+                    <td className="py-3.5 pl-5 pr-3 font-medium text-foreground">
+                      {o.orderId}
+                    </td>
                     <td className="py-3.5 px-3">
                       <div className="flex items-center gap-2.5">
                         <div className="size-7 rounded-md bg-secondary flex items-center justify-center text-muted-foreground">
                           <Icon className="size-3.5" />
                         </div>
                         <div>
-                          <div className="text-sm">{o.customerName}</div>
-                          <div className="text-[11px] text-muted-foreground">{o.channel}</div>
+                          <div className="text-sm">{o.userDetails.name}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {o.channel}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-3.5 px-3 text-muted-foreground">
-                      {o.items[0].name}
+                      {o.items[0].dishDetails.name}
                       {o.items.length > 1 ? ` +${o.items.length - 1}` : ""}
                     </td>
-                    <td className="py-3.5 px-3 text-right font-medium tabular-nums">{usd(o.total)}</td>
+                    <td className="py-3.5 px-3 text-right font-medium tabular-nums">
+                      {usd(o.total)}
+                    </td>
                     <td className="py-3.5 px-3">
                       <StatusPill status={o.status} />
                     </td>
-                    <td className="py-3.5 px-3 text-muted-foreground">{minutesAgoLabel(o.placedAt)}</td>
+                    <td className="py-3.5 px-3 text-muted-foreground">
+                      {minutesAgoLabel(o.orderTime.toString())}
+                    </td>
                     <td className="py-3.5 pr-5 text-right">
-                      <button className="size-7 rounded-md hover-elevate active-elevate-2 inline-flex items-center justify-center text-muted-foreground" data-testid={`button-row-menu-${o.id}`}>
+                      <button
+                        className="size-7 rounded-md hover-elevate active-elevate-2 inline-flex items-center justify-center text-muted-foreground"
+                        data-testid={`button-row-menu-${o.orderId}`}
+                      >
                         <MoreHorizontal className="size-4" />
                       </button>
                     </td>
@@ -282,11 +359,25 @@ export default function Dashboard() {
   );
 }
 
-function Mini({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Mini({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
-    <div className={`rounded-xl p-3 ${accent ? "bg-primary/10" : "bg-secondary"}`}>
+    <div
+      className={`rounded-xl p-3 ${accent ? "bg-primary/10" : "bg-secondary"}`}
+    >
       <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-lg font-semibold tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
+      <div
+        className={`mt-1 text-lg font-semibold tracking-tight ${accent ? "text-primary" : ""}`}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -309,7 +400,9 @@ function FlashCard({
     <div
       className={[
         "relative rounded-xl p-4 flex flex-col gap-3 min-h-[148px] overflow-hidden",
-        isDark ? "bg-foreground text-background" : "bg-primary text-primary-foreground",
+        isDark
+          ? "bg-foreground text-background"
+          : "bg-primary text-primary-foreground",
       ].join(" ")}
     >
       <div className="absolute -right-6 -top-6 opacity-30">

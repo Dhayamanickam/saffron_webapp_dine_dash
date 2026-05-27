@@ -6,7 +6,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatStrip } from "@/components/StatStrip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,36 +35,49 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tabs = [
-  { id: "active", label: "Active" },
-  { id: "new", label: "New" },
-  { id: "preparing", label: "Preparing" },
-  { id: "ready", label: "Ready" },
-  { id: "completed", label: "Completed" },
+  { id: "Active", label: "Active" },
+  { id: "New", label: "New" },
+  { id: "Preparing", label: "Preparing" },
+  { id: "Ready", label: "Ready" },
+  { id: "Completed", label: "Completed" },
 ] as const;
 
 type Tab = (typeof tabs)[number]["id"];
 
 export default function Orders() {
-  const { orders, acceptOrder, rejectOrder, advanceOrder, setOrderPrep, reportDelay } = useStore();
-  const [tab, setTab] = useState<Tab>("active");
+  const {
+    orders,
+    acceptOrder,
+    rejectOrder,
+    advanceOrder,
+    setOrderPrep,
+    reportDelay,
+  } = useStore();
+  const [tab, setTab] = useState<Tab>("Active");
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {
-      if (tab === "active") {
-        if (!["new", "preparing", "ready"].includes(o.status)) return false;
-      } else if (tab === "completed") {
-        if (o.status !== "picked") return false;
+      if (tab === "Active") {
+        if (!["New", "Preparing", "Ready"].includes(o.status)) return false;
+      } else if (tab === "Completed") {
+        if (o.status !== "Completed") return false;
       } else if (o.status !== tab) return false;
 
-      if (q && !`${o.id} ${o.customerName}`.toLowerCase().includes(q.toLowerCase())) return false;
+      if (
+        q &&
+        !`${o.orderId} ${o.userDetails.name}`
+          .toLowerCase()
+          .includes(q.toLowerCase())
+      )
+        return false;
       return true;
     });
   }, [orders, tab, q]);
 
-  const newCount = orders.filter((o) => o.status === "new").length;
-  const prepCount = orders.filter((o) => o.status === "preparing").length;
-  const readyCount = orders.filter((o) => o.status === "ready").length;
+  const newCount = orders.filter((o) => o.status === "New").length;
+  const prepCount = orders.filter((o) => o.status === "Preparing").length;
+  const readyCount = orders.filter((o) => o.status === "Ready").length;
   const todayRevenue = orders.reduce((s, o) => s + o.total, 0);
 
   return (
@@ -72,7 +89,11 @@ export default function Orders() {
           <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" className="rounded-full" data-testid="button-export-orders">
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  data-testid="button-export-orders"
+                >
                   <Download className="size-4 mr-1" /> Export
                 </Button>
               </TooltipTrigger>
@@ -84,10 +105,30 @@ export default function Orders() {
 
       <StatStrip
         items={[
-          { label: "New", value: String(newCount), icon: Inbox, hint: "Awaiting accept" },
-          { label: "Preparing", value: String(prepCount), icon: Flame, hint: "In the kitchen" },
-          { label: "Ready", value: String(readyCount), icon: PackageCheck, hint: "For courier pickup" },
-          { label: "Revenue today", value: usd(todayRevenue), icon: Wallet, accent: true },
+          {
+            label: "New",
+            value: String(newCount),
+            icon: Inbox,
+            hint: "Awaiting accept",
+          },
+          {
+            label: "Preparing",
+            value: String(prepCount),
+            icon: Flame,
+            hint: "In the kitchen",
+          },
+          {
+            label: "Ready",
+            value: String(readyCount),
+            icon: PackageCheck,
+            hint: "For courier pickup",
+          },
+          {
+            label: "Revenue today",
+            value: usd(todayRevenue),
+            icon: Wallet,
+            accent: true,
+          },
         ]}
       />
 
@@ -140,7 +181,7 @@ export default function Orders() {
           <AnimatePresence mode="popLayout">
             {filtered.map((o) => (
               <motion.div
-                key={o.id}
+                key={o.orderId}
                 layout
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -150,11 +191,13 @@ export default function Orders() {
                 <div
                   className={[
                     "rounded-2xl bg-card border shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden",
-                    o.isUrgent && o.status !== "picked" ? "border-primary/40 ring-1 ring-primary/30" : "border-card-border",
+                    o.isUrgent && o.status !== "Completed"
+                      ? "border-primary/40 ring-1 ring-primary/30"
+                      : "border-card-border",
                   ].join(" ")}
-                  data-testid={`order-card-${o.id}`}
+                  data-testid={`order-card-${o.orderId}`}
                 >
-                  {o.isUrgent && o.status !== "picked" && (
+                  {o.isUrgent && o.status !== "Completed" && (
                     <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-wider px-2 py-0.5">
                       <AlertTriangle className="size-3" /> Urgent
                     </div>
@@ -162,39 +205,73 @@ export default function Orders() {
 
                   <header className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-[11px] text-muted-foreground">{o.channel} · {minutesAgoLabel(o.placedAt)}</div>
-                      <div className="text-base font-semibold mt-0.5">{o.id}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {o.channel} · {minutesAgoLabel(o.orderTime.toString())}
+                      </div>
+                      <div className="text-base font-semibold mt-0.5">
+                        {o.orderId}
+                      </div>
                     </div>
                     <StatusPill status={o.status} />
                   </header>
 
                   <div className="flex items-center gap-3 text-sm">
                     <div className="size-9 rounded-full bg-secondary flex items-center justify-center font-medium">
-                      {o.customerName.split(" ").map((s) => s[0]).join("").slice(0, 2)}
+                      {o.userDetails.name
+                        .split(" ")
+                        .map((s) => s[0])
+                        .join("")
+                        .slice(0, 2)}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{o.customerName}</div>
+                      <div className="font-medium truncate">
+                        {o.userDetails.name}
+                      </div>
                       <div className="text-xs text-muted-foreground inline-flex items-center gap-3">
-                        <span className="inline-flex items-center gap-1"><Phone className="size-3" /> {o.customerPhone}</span>
-                        <span className="inline-flex items-center gap-1 truncate"><MapPin className="size-3" /> {o.address}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Phone className="size-3" /> {o.userDetails.mobile}
+                        </span>
+                        <span className="inline-flex items-center gap-1 truncate">
+                          <MapPin className="size-3" /> {o.userDetails.address}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="rounded-xl bg-secondary p-3 space-y-2">
-                    {o.items.map((it) => (
-                      <div key={it.id} className="flex items-center justify-between text-sm">
-                        <div>
-                          <span className="text-muted-foreground mr-2">{it.qty}×</span>
-                          <span className="font-medium">{it.name}</span>
-                          {it.notes && <span className="ml-2 text-xs text-muted-foreground">— {it.notes}</span>}
+                    {o.items.map((it) => {
+                      console.log(it);
+                      return (
+                        <div
+                          key={it.dishId}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <div>
+                            <span className="text-muted-foreground mr-2">
+                              {it.quantity}×
+                            </span>
+                            <span className="font-medium">
+                              {it.dishDetails.name}
+                            </span>
+                            {it.notes && (
+                              <span className="ml-2 text-xs text-muted-foreground">
+                                — {it.notes}
+                              </span>
+                            )}
+                          </div>
+                          <span className="tabular-nums text-muted-foreground">
+                            {usd(it.dishDetails.price * it.quantity)}
+                          </span>
                         </div>
-                        <span className="tabular-nums text-muted-foreground">{usd(it.price * it.qty)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="flex items-center justify-between pt-2 border-t border-card-border">
-                      <span className="text-xs text-muted-foreground">Total</span>
-                      <span className="font-semibold tabular-nums">{usd(o.total)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        Total
+                      </span>
+                      <span className="font-semibold tabular-nums">
+                        {usd(o.total)}
+                      </span>
                     </div>
                   </div>
 
@@ -204,14 +281,16 @@ export default function Orders() {
                       <span className="text-sm">Prep</span>
                       <Input
                         type="number"
-                        value={o.prepMinutes}
-                        onChange={(e) => setOrderPrep(o.id, Number(e.target.value))}
+                        value={o.prepTime}
+                        onChange={(e) =>
+                          setOrderPrep(o.orderId, Number(e.target.value))
+                        }
                         className="w-16 h-8"
-                        data-testid={`input-prep-${o.id}`}
+                        data-testid={`input-prep-${o.orderId}`}
                       />
                       <span className="text-sm text-muted-foreground">min</span>
                     </div>
-                    {o.partnerId && (
+                    {o.courierId && (
                       <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Bike className="size-3.5" />
                         Partner assigned
@@ -220,15 +299,15 @@ export default function Orders() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    {o.status === "new" && (
+                    {o.status === "New" && (
                       <>
                         <Button
                           className="rounded-full bg-foreground text-background hover-elevate active-elevate-2"
                           onClick={() => {
-                            acceptOrder(o.id);
-                            toast.success(`Accepted ${o.id}`);
+                            acceptOrder(o.orderId);
+                            toast.success(`Accepted ${o.orderId}`);
                           }}
-                          data-testid={`button-accept-${o.id}`}
+                          data-testid={`button-accept-${o.orderId}`}
                         >
                           <Check className="size-4 mr-1" /> Accept
                         </Button>
@@ -236,48 +315,48 @@ export default function Orders() {
                           variant="outline"
                           className="rounded-full"
                           onClick={() => {
-                            rejectOrder(o.id);
-                            toast.error(`Rejected ${o.id}`);
+                            rejectOrder(o.orderId);
+                            toast.error(`Rejected ${o.orderId}`);
                           }}
-                          data-testid={`button-reject-${o.id}`}
+                          data-testid={`button-reject-${o.orderId}`}
                         >
                           <X className="size-4 mr-1" /> Reject
                         </Button>
                       </>
                     )}
-                    {o.status === "preparing" && (
+                    {o.status === "Preparing" && (
                       <Button
                         className="rounded-full bg-primary text-primary-foreground hover-elevate active-elevate-2"
                         onClick={() => {
-                          advanceOrder(o.id);
-                          toast.success(`${o.id} marked Ready`);
+                          advanceOrder(o.orderId);
+                          toast.success(`${o.orderId} marked Ready`);
                         }}
-                        data-testid={`button-mark-ready-${o.id}`}
+                        data-testid={`button-mark-ready-${o.orderId}`}
                       >
                         <PackageCheck className="size-4 mr-1" /> Mark Ready
                       </Button>
                     )}
-                    {o.status === "ready" && (
+                    {o.status === "Ready" && (
                       <Button
                         className="rounded-full bg-primary text-primary-foreground hover-elevate active-elevate-2"
                         onClick={() => {
-                          advanceOrder(o.id);
-                          toast.success(`${o.id} handed to courier`);
+                          advanceOrder(o.orderId);
+                          toast.success(`${o.orderId} handed to courier`);
                         }}
-                        data-testid={`button-handoff-${o.id}`}
+                        data-testid={`button-handoff-${o.orderId}`}
                       >
                         <Truck className="size-4 mr-1" /> Hand off
                       </Button>
                     )}
-                    {o.status !== "picked" && o.status !== "rejected" && (
+                    {o.status !== "Completed" && o.status !== "Rejected" && (
                       <Button
                         variant="ghost"
                         className="rounded-full text-muted-foreground"
                         onClick={() => {
-                          reportDelay(o.id, 10);
-                          toast.message(`+10 min added to ${o.id}`);
+                          reportDelay(o.orderId, 10);
+                          toast.message(`+10 min added to ${o.orderId}`);
                         }}
-                        data-testid={`button-delay-${o.id}`}
+                        data-testid={`button-delay-${o.orderId}`}
                       >
                         Report delay +10
                       </Button>

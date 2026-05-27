@@ -29,7 +29,11 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useStore } from "@/lib/store";
 
-type NavItem = { to: string; icon: React.ComponentType<{ className?: string }>; label: string };
+type NavItem = {
+  to: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+};
 
 const primary: NavItem[] = [
   { to: "/", icon: LayoutGrid, label: "Home" },
@@ -48,7 +52,7 @@ const moreItems: NavItem[] = [
 
 export function MobileNav() {
   const [location] = useLocation();
-  const { status, setStatus } = useStore();
+  const { status, setStatus, logout } = useStore();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
 
@@ -68,14 +72,17 @@ export function MobileNav() {
       <div className="flex items-stretch justify-around px-1 pt-1 pb-1">
         {primary.map((it) => {
           const Icon = it.icon;
-          const active = it.to === "/" ? location === "/" : location.startsWith(it.to);
+          const active =
+            it.to === "/" ? location === "/" : location.startsWith(it.to);
           return (
             <Link
               key={it.to}
               href={it.to}
               className={[
                 "flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg transition-colors",
-                active ? "text-primary" : "text-muted-foreground hover-elevate active-elevate-2",
+                active
+                  ? "text-primary"
+                  : "text-muted-foreground hover-elevate active-elevate-2",
               ].join(" ")}
               data-testid={`mobile-nav-${it.label.toLowerCase()}`}
             >
@@ -89,7 +96,9 @@ export function MobileNav() {
             <button
               className={[
                 "flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg transition-colors",
-                moreActive ? "text-primary" : "text-muted-foreground hover-elevate active-elevate-2",
+                moreActive
+                  ? "text-primary"
+                  : "text-muted-foreground hover-elevate active-elevate-2",
               ].join(" ")}
               data-testid="mobile-nav-more"
             >
@@ -97,7 +106,10 @@ export function MobileNav() {
               <span className="text-[10px] font-medium">More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[85%] sm:max-w-sm p-0 flex flex-col">
+          <SheetContent
+            side="right"
+            className="w-[85%] sm:max-w-sm p-0 flex flex-col"
+          >
             <SheetHeader className="px-5 pt-5 pb-3 border-b border-card-border">
               <SheetTitle className="flex items-center gap-2">
                 <div className="size-8 rounded-full bg-primary flex items-center justify-center">
@@ -109,7 +121,9 @@ export function MobileNav() {
 
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
               <section>
-                <p className="px-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">More pages</p>
+                <p className="px-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  More pages
+                </p>
                 <div className="grid grid-cols-1 gap-1">
                   {moreItems.map((it) => {
                     const Icon = it.icon;
@@ -136,23 +150,34 @@ export function MobileNav() {
               </section>
 
               <section>
-                <p className="px-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">Restaurant status</p>
+                <p className="px-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Restaurant status
+                </p>
                 <div className="rounded-xl border border-card-border bg-card divide-y divide-card-border">
-                  <Row icon={<Power className="size-4 text-emerald-500" />} label="Open">
+                  <Row
+                    icon={<Power className="size-4 text-emerald-500" />}
+                    label="Open"
+                  >
                     <Switch
                       checked={status.open}
                       onCheckedChange={(v) => setStatus({ open: v })}
                       data-testid="mobile-switch-open"
                     />
                   </Row>
-                  <Row icon={<Flame className="size-4 text-primary" />} label="Busy mode">
+                  <Row
+                    icon={<Flame className="size-4 text-primary" />}
+                    label="Busy mode"
+                  >
                     <Switch
                       checked={status.busy}
                       onCheckedChange={(v) => setStatus({ busy: v })}
                       data-testid="mobile-switch-busy"
                     />
                   </Row>
-                  <Row icon={<Pause className="size-4 text-destructive" />} label="Pause new orders">
+                  <Row
+                    icon={<Pause className="size-4 text-destructive" />}
+                    label="Pause new orders"
+                  >
                     <Switch
                       checked={status.paused}
                       onCheckedChange={(v) => setStatus({ paused: v })}
@@ -163,10 +188,25 @@ export function MobileNav() {
               </section>
 
               <section>
-                <p className="px-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">Preferences</p>
+                <p className="px-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Preferences
+                </p>
                 <div className="rounded-xl border border-card-border bg-card divide-y divide-card-border">
-                  <Row icon={dark ? <Moon className="size-4" /> : <Sun className="size-4" />} label="Dark mode">
-                    <Switch checked={dark} onCheckedChange={setDark} data-testid="mobile-switch-dark" />
+                  <Row
+                    icon={
+                      dark ? (
+                        <Moon className="size-4" />
+                      ) : (
+                        <Sun className="size-4" />
+                      )
+                    }
+                    label="Dark mode"
+                  >
+                    <Switch
+                      checked={dark}
+                      onCheckedChange={setDark}
+                      data-testid="mobile-switch-dark"
+                    />
                   </Row>
                 </div>
               </section>
@@ -180,6 +220,7 @@ export function MobileNav() {
                   Help center
                 </button>
                 <button
+                  onClick={() => logout}
                   className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover-elevate active-elevate-2"
                   data-testid="mobile-signout"
                 >
@@ -195,7 +236,15 @@ export function MobileNav() {
   );
 }
 
-function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+function Row({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-2 px-3 py-2.5">
       <div className="flex items-center gap-2.5 text-sm">

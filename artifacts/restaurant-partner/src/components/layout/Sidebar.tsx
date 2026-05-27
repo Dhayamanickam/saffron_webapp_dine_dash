@@ -16,9 +16,18 @@ import {
   Flame,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useStore } from "@/lib/store";
 
-type NavItem = { to: string; icon: React.ComponentType<{ className?: string }>; label: string };
+type NavItem = {
+  to: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+};
 
 const items: NavItem[] = [
   { to: "/", icon: LayoutGrid, label: "Dashboard" },
@@ -35,6 +44,7 @@ const items: NavItem[] = [
 export function Sidebar() {
   const [location] = useLocation();
   const [dark, setDark] = useState(false);
+  const { logout } = useStore();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -75,7 +85,8 @@ export function Sidebar() {
       <nav className="flex flex-col items-center gap-2">
         {items.map((it) => {
           const Icon = it.icon;
-          const active = it.to === "/" ? location === "/" : location.startsWith(it.to);
+          const active =
+            it.to === "/" ? location === "/" : location.startsWith(it.to);
           return (
             <Tooltip key={it.to}>
               <TooltipTrigger asChild>
@@ -114,6 +125,9 @@ export function Sidebar() {
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              onClick={()=>{
+                logout()
+              }}
               className="size-9 rounded-full bg-card border border-card-border flex items-center justify-center text-muted-foreground hover-elevate active-elevate-2"
               aria-label="Sign out"
               data-testid="button-signout"
