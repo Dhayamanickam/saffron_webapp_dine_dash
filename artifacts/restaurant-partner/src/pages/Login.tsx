@@ -22,7 +22,7 @@ export default function Login() {
     setSubmitting(false);
 
     if (success) {
-      toast.success("Welcome back to Saffron Smoke!");
+      toast.success("Welcome back to DineDash!");
       setLocation("/");
     } else {
       toast.error("Invalid restaurant credentials. Please try again.");
