@@ -35,7 +35,7 @@ const links = [
 ];
 
 export function TopNav() {
-  const { restaurantProfile } = useStore();
+  const { restaurantProfile, logout } = useStore();
   const [location] = useLocation();
   const { status, setStatus } = useStore();
 
@@ -209,7 +209,12 @@ export function TopNav() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem
+              onClick={() => {
+                logout();
+              }}
+              className="text-destructive"
+            >
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
