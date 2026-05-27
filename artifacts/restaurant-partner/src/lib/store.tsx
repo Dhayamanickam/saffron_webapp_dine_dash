@@ -192,22 +192,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           restaurantRes,
           ticketsRes,
         ] = await Promise.all([
-          axios.get(`${API_BASE_URL}/admin/get-orders`),
+          axios.get(`${API_BASE_URL}/admin/get-orders`, {
+            params: { restaurantId: restaurantProfile?.restaurantId }, // Fixed axios params layout syntax!
+          }),
           axios.get(`${API_BASE_URL}/admin/get-dishes`, {
-            params: { restaurantId: "72cabaf9-1f86-48cd-a908-92c74867fc5c" }, // Fixed axios params layout syntax!
+            params: { restaurantId: restaurantProfile?.restaurantId }, // Fixed axios params layout syntax!
           }),
-          axios.get(`${API_BASE_URL}/admin/get-offers`),
-          axios.get(`${API_BASE_URL}/admin/get-flashDeals`, {
-            params: { restaurantId: "72cabaf9-1f86-48cd-a908-92c74867fc5c" }, // Fixed axios params layout syntax!
+          axios.get(`${API_BASE_URL}/admin/get-offers`, {
+            params: { restaurantId: restaurantProfile?.restaurantId }, // Fixed axios params layout syntax!
           }),
-          axios.get(`${API_BASE_URL}/admin/get-couriers`, {
-            params: { restaurantId: "72cabaf9-1f86-48cd-a908-92c74867fc5c" }, // Fixed axios params layout syntax!
+          axios.get(`${API_BASE_URL}/admin/get-flashDeals`,  {
+            params: { restaurantId: restaurantProfile?.restaurantId }, // Fixed axios params layout syntax!
           }),
-          axios.get(`${API_BASE_URL}/admin/get-restaurant`, {
-            params: { restaurantId: "72cabaf9-1f86-48cd-a908-92c74867fc5c" },
+          axios.get(`${API_BASE_URL}/admin/get-couriers`,  {
+            params: { restaurantId: restaurantProfile?.restaurantId }, // Fixed axios params layout syntax!
           }),
-          axios.get(`${API_BASE_URL}/admin/get-tickets`, {
-            params: { restaurantId: "72cabaf9-1f86-48cd-a908-92c74867fc5c" },
+          axios.get(`${API_BASE_URL}/admin/get-restaurant`,  {
+            params: { restaurantId: restaurantProfile?.restaurantId }, // Fixed axios params layout syntax!
+          }),
+          axios.get(`${API_BASE_URL}/admin/get-tickets`,  {
+            params: { restaurantId: restaurantProfile?.restaurantId }, // Fixed axios params layout syntax!
           }),
         ]);
 
@@ -677,7 +681,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
         const normalizedOffer = {
           ...computedValue,
-          restaurantId: "72cabaf9-1f86-48cd-a908-92c74867fc5c", // Ensures local UI cards render values perfectly
+          restaurantId: restaurantProfile?.restaurantId!, // Ensures local UI cards render values perfectly
         };
 
         // Optimistic UI Update
@@ -836,7 +840,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         message,
         orderRef,
       }) => {
-        const restaurantId = "72cabaf9-1f86-48cd-a908-92c74867fc5c";
+        const restaurantId = restaurantProfile?.restaurantId!;
         const generatedTicketId = `TKT-${Math.floor(Math.random() * 9000) + 1000}`;
 
         // 1. Format the initial message sub-document using the database data contract
@@ -1029,7 +1033,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       restaurantProfile,
       updateRestaurantProfile: async (updatedFields: Partial<Restaurant>) => {
-        const restaurantId = "72cabaf9-1f86-48cd-a908-92c74867fc5c";
+        const restaurantId = restaurantProfile?.restaurantId;
 
         // Optimistic state preservation mapping
         setRestaurantProfile((prev) =>

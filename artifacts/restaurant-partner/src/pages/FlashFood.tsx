@@ -30,6 +30,7 @@ export default function FlashFood() {
     toggleFlashDeal,
     deleteFlashDeal,
     menu,
+    restaurantProfile,
   } = useStore();
   const [open, setOpen] = useState(false);
 
@@ -66,6 +67,7 @@ export default function FlashFood() {
                 </Button>
               </DialogTrigger>
               <NewFlashDialog
+                restaurantId={restaurantProfile?.restaurantId!}
                 onCreate={(d) => {
                   upsertFlashDeal(d);
                   toast.success("Flash deal scheduled");
@@ -181,8 +183,10 @@ export default function FlashFood() {
 
 function NewFlashDialog({
   onCreate,
+  restaurantId,
 }: {
   onCreate: (d: import("@/lib/mockData").FlashDeal) => void;
+  restaurantId: string;
 }) {
   const { menu } = useStore();
   const [itemId, setItemId] = useState(menu[0]?.dishId ?? "");
@@ -258,7 +262,7 @@ function NewFlashDialog({
               quantity: qty,
               sold: 0,
               active: true,
-              restaurantId: "72cabaf9-1f86-48cd-a908-92c74867fc5c",
+              restaurantId,
             })
           }
           data-testid="button-create-flash"

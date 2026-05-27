@@ -409,6 +409,7 @@ function ItemDialog({
   initial: import("@/lib/mockData").MenuItem | null;
   onSave: (item: import("@/lib/mockData").MenuItem) => void;
 }) {
+  const { restaurantProfile } = useStore();
   const [name, setName] = useState(initial?.name ?? "");
   const [price, setPrice] = useState<number | "">(initial?.price ?? "");
   const [prep, setPrep] = useState<number | "">(initial?.prepTime ?? "");
@@ -484,7 +485,7 @@ function ItemDialog({
                     "Successfully stored asset to AWS Cloud infrastructure at location:",
                     s3PublicUrl,
                   );
-                  setImageUrl(s3PublicUrl)
+                  setImageUrl(s3PublicUrl);
                 }
               } catch (error: any) {
                 console.log(error.response?.data.error);
@@ -583,7 +584,7 @@ function ItemDialog({
               // 1. Maintain core structural tracking fields safely
               dishId: initial?.dishId ?? `dish_${Date.now()}`, // Consistent namespace prefixing
               restaurantId:
-                initial?.restaurantId ?? "72cabaf9-1f86-48cd-a908-92c74867fc5c",
+                initial?.restaurantId ?? restaurantProfile?.restaurantId!,
               name: name.trim(),
               price: Number(price) || 0,
               prepTime: Number(prep) || 15, // Default baseline fallback to 15 mins if parsing yields NaN
