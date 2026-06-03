@@ -23,6 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { KeyboardEvent, useState } from "react";
 
 const links = [
   { to: "/", label: "Dashboard" },
@@ -34,10 +35,49 @@ const links = [
   { to: "/reports", label: "Reports" },
 ];
 
+const SEARCH_ROUTE_MAP: Record<string, string> = {
+  dashboard: "/",
+  home: "/",
+  main: "/",
+
+  orders: "/orders",
+  order: "/orders",
+  history: "/orders",
+
+  menu: "/menu",
+  dishes: "/menu",
+  dish: "/menu",
+  food: "/menu",
+  items: "/menu",
+
+  "flash food": "/flash-food",
+  flash: "/flash-food",
+  deals: "/flash-food",
+  deal: "/flash-food",
+  promo: "/flash-food",
+
+  offers: "/offers",
+  offer: "/offers",
+  coupons: "/offers",
+  coupon: "/offers",
+  discounts: "/offers",
+
+  delivery: "/delivery",
+  couriers: "/delivery",
+  drivers: "/delivery",
+  partners: "/delivery",
+
+  reports: "/reports",
+  analytics: "/reports",
+  revenue: "/reports",
+  stats: "/reports",
+};
+
 export function TopNav() {
   const { restaurantProfile, logout } = useStore();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { status, setStatus } = useStore();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const statusLabel = status.paused
     ? "Paused"
@@ -53,6 +93,25 @@ export function TopNav() {
       : status.open
         ? "bg-emerald-500"
         : "bg-muted-foreground";
+
+  const handleSearchKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const sanitizedQuery = searchQuery.trim().toLowerCase();
+
+      // Look up if the exact word or alias matches a defined route
+      const targetRoute = SEARCH_ROUTE_MAP[sanitizedQuery];
+
+      if (targetRoute) {
+        setLocation(targetRoute); // Perform client-side navigation redirect
+        setSearchQuery(""); // Clear the input bar field layout context
+      } else {
+        // Fallback: Optional UX enhancement if no match is found
+        console.log(
+          `No routing shorthand configuration found for: "${sanitizedQuery}"`,
+        );
+      }
+    }
+  };
 
   if (!restaurantProfile) {
     <Redirect to="/login" />;
@@ -159,6 +218,9 @@ export function TopNav() {
         <div className="hidden md:flex items-center gap-2 rounded-full bg-card border border-card-border px-3 py-1.5 shadow-sm">
           <Search className="size-3.5 text-muted-foreground" />
           <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
             placeholder="Search orders, menu, tickets…"
             className="bg-transparent text-sm outline-none placeholder:text-muted-foreground w-48"
             data-testid="input-global-search"

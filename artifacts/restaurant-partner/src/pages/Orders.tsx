@@ -52,6 +52,7 @@ export default function Orders() {
     advanceOrder,
     setOrderPrep,
     reportDelay,
+    exportOrdersCSV
   } = useStore();
   const [tab, setTab] = useState<Tab>("Active");
   const [q, setQ] = useState("");
@@ -90,6 +91,7 @@ export default function Orders() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                onClick={exportOrdersCSV}
                   variant="outline"
                   className="rounded-full"
                   data-testid="button-export-orders"

@@ -26,7 +26,7 @@ import {
 } from "recharts";
 
 export default function Reports() {
-  const { orders, revenueByDay } = useStore();
+  const { orders, revenueByDay ,exportOrdersCSV} = useStore();
   const [from, setFrom] = useState(
     new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
   );
@@ -73,6 +73,7 @@ export default function Reports() {
               />
             </div>
             <Button
+            onClick={exportOrdersCSV}
               variant="outline"
               className="rounded-full"
               data-testid="button-export-reports"

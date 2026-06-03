@@ -23,8 +23,8 @@ import {
 } from "./mockData";
 import { Redirect, useLocation } from "wouter";
 
-export const API_BASE_URL = "https://dinedash-backend-1.onrender.com/api";
-// export const API_BASE_URL = "http://localhost:4000/api";
+// export const API_BASE_URL = "https://dinedash-backend-1.onrender.com/api";
+export const API_BASE_URL = "http://localhost:4000/api";
 
 type RestaurantStatus = {
   open: boolean;
@@ -92,6 +92,8 @@ type Ctx = {
 
   restaurantProfile: Restaurant | null;
   updateRestaurantProfile: (updatedFields: Partial<Restaurant>) => void;
+
+  exportOrdersCSV: () => Promise<void>;
 };
 
 const StoreCtx = createContext<Ctx | null>(null);
@@ -220,6 +222,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       // 3. Force an immediate screen reload or hard routing bounce to completely clear cached memory models
       window.location.href = "/login";
+    }
+  };
+
+  const exportOrdersCSV = async () => {
+    try {
+      const restaurantId = restaurantProfile?.restaurantId;
+      if (!restaurantId) return;
+
+      // Trigger file blob download using absolute API reference link
+      window.open(
+        `${API_BASE_URL}/admin/export-orders-csv?restaurantId=${restaurantId}`,
+        "_blank",
+      );
+    } catch (err) {
+      console.error("Could not trigger download channel instance stream:", err);
     }
   };
   // ----------------------------------------------------
@@ -1213,6 +1230,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           window.location.href = "/login";
         }
       },
+      exportOrdersCSV,
     }),
     [
       status,
@@ -1231,6 +1249,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated,
       login,
       logout,
+      exportOrdersCSV,
     ],
   );
 

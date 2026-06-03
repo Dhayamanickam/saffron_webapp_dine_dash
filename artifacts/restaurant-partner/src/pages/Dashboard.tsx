@@ -44,6 +44,7 @@ export default function Dashboard() {
     restaurantProfile,
     popularItems,
     revenueByDay,
+    exportOrdersCSV,
   } = useStore();
 
   const stats = useMemo(() => {
@@ -111,6 +112,7 @@ export default function Dashboard() {
                 Payouts
               </button>
               <button
+                onClick={exportOrdersCSV}
                 className="flex-1 rounded-full bg-secondary text-foreground text-sm py-2.5 font-medium hover-elevate active-elevate-2"
                 data-testid="button-export"
               >
